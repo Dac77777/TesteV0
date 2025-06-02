@@ -31,9 +31,10 @@ import { authService } from "@/lib/auth"
 import { activityLogger } from "@/lib/activity-logger"
 import { useAppContext } from "@/contexts/app-context"
 import type { User } from "@/types/user"
+import { GoogleSheetsConfig } from "@/components/admin/google-sheets-config"; // Importar o novo componente
 
 export default function AdminConfiguracoesPage() {
-  const [isConnected, setIsConnected] = useState(false)
+  const [isConnected, setIsConnected] = useState(false) // Este estado pode ser removido se GoogleSheetsConfig gerenciar o status
   const [isSyncing, setIsSyncing] = useState(false)
   const [lastSync, setLastSync] = useState("2023-06-01 14:30:00")
   const [autoSync, setAutoSync] = useState(true)
@@ -449,6 +450,7 @@ export default function AdminConfiguracoesPage() {
           <TabsTrigger value="logs">Logs</TabsTrigger>
         </TabsList>
 
+        {/* Conteúdo da Aba Empresa */}
         <TabsContent value="empresa">
           <div className="space-y-6">
             {/* Configurações da Empresa */}
@@ -861,48 +863,108 @@ export default function AdminConfiguracoesPage() {
           </Card>
         </TabsContent>
 
+        {/* Conteúdo da Aba Google Sheets */}
         <TabsContent value="sheets">
-          {/* Google Sheets Integration */}
+          <GoogleSheetsConfig />
+        </TabsContent>
+
+        {/* Conteúdo da Aba Dados */}
+        <TabsContent value="dados">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Database className="h-5 w-5" />
-                Integração Google Sheets
+                Gerenciamento de Dados
               </CardTitle>
-              <CardDescription>Configure a sincronização automática com Google Sheets</CardDescription>
+              <CardDescription>Exporte ou importe dados do sistema.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span>Status da Conexão:</span>
-                  {isConnected ? (
-                    <Badge variant="outline" className="bg-green-100 text-green-800">
-                      <CheckCircle className="mr-1 h-3 w-3" />
-                      Conectado
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="bg-red-100 text-red-800">
-                      <XCircle className="mr-1 h-3 w-3" />
-                      Desconectado
-                    </Badge>
-                  )}
-                </div>
-                {isConnected && <div className="text-sm text-muted-foreground">Última sincronização: {lastSync}</div>}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Button onClick={handleExportData} variant="outline">
+                  Exportar Dados
+                </Button>
+                <Button onClick={handleImportData} variant="outline">
+                  Importar Dados (Substituir)
+                </Button>
               </div>
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  A importação de dados substituirá todos os dados existentes. Faça um backup antes de prosseguir.
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-              {!isConnected ? (
-                <div className="space-y-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="spreadsheetId">ID da Planilha</Label>
-                    <Input
-                      id="spreadsheetId"
-                      placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
-                      value={sheetsConfig.spreadsheetId}
-                      onChange={(e) =>
-                        setSheetsConfig({
-                          ...sheetsConfig,
-                          spreadsheetId: e.target.value,
-                        })
-                      }
-                    />
-                    <p className="text-xs text-muted-fore\
+        {/* Conteúdo da Aba Logs */}
+        <TabsContent value="logs">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Logs de Atividade</CardTitle>
+                <CardDescription>Visualize os logs de atividade do sistema.</CardDescription>
+              </div>
+              <div className="flex gap-2">
+                <select
+                  value={filterModule}
+                  onChange={(e) => setFilterModule(e.target.value)}
+                  className="border p-2 rounded text-sm"
+                >
+                  <option value="all">Todos os Módulos</option>
+                  {uniqueModules.map((mod) => (
+                    <option key={mod} value={mod}>
+                      {mod}
+                    </option>
+                  ))}
+                </select>
+                <Button onClick={handleClearLogs} variant="destructive">
+                  Limpar Logs
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border max-h-[600px] overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Timestamp</TableHead>
+                      <TableHead>Ação</TableHead>
+                      <TableHead>Módulo</TableHead>
+                      <TableHead>Detalhes</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredLogs.length > 0 ? (
+                      filteredLogs.map((log) => (
+                        <TableRow key={log.id}>
+                          <TableCell>
+                            {new Date(log.timestamp).toLocaleString("pt-BR", {
+                              dateStyle: "short",
+                              timeStyle: "medium",
+                            })}
+                          </TableCell>
+                          <TableCell>{getActionBadge(log.action)}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{log.module}</Badge>
+                          </TableCell>
+                          <TableCell className="text-xs">{log.details}</TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center">
+                          Nenhum log encontrado.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+}

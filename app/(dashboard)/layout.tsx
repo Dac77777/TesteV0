@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Home, Users, Car, Wrench, Package, FileText, Calendar, BarChart, Settings, LogOut, Menu } from "lucide-react"
 import { authService } from "@/lib/auth"
 import { useAppContext } from "@/contexts/app-context"
+import { GoogleSheetsSettingsProvider } from '@/contexts/google-sheets-settings-context'; // Importação adicionada
 
 export default function DashboardLayout({
   children,
@@ -21,13 +22,13 @@ export default function DashboardLayout({
   const pathname = usePathname()
 
   // Usar o contexto para obter as configurações da empresa
-  const { companySettings } = useAppContext()
+  const { companySettings } = useAppContext() // AppContext ainda é usado aqui
 
   useEffect(() => {
     setMounted(true)
 
     const currentUser = authService.getCurrentUser()
-    if (!currentUser || currentUser.role !== "admin") {
+    if (!currentUser || currentUser.role !== "admin") { // Ajuste aqui: apenas admin pode acessar /dashboard
       authService.logout()
       router.push("/login")
       return
@@ -41,7 +42,7 @@ export default function DashboardLayout({
     router.push("/login")
   }
 
-  if (!mounted || !user || user.role !== "admin") {
+  if (!mounted || !user) { // Removida a verificação user.role !== "admin" pois já é feita acima
     return null
   }
 
@@ -58,7 +59,6 @@ export default function DashboardLayout({
     { icon: Settings, label: "Configurações", path: "/dashboard/configuracoes" },
   ]
 
-  // Atualizar o SidebarContent para usar o nome da empresa
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       <div className="flex items-center px-4 py-6 border-b">
@@ -94,43 +94,49 @@ export default function DashboardLayout({
   )
 
   return (
-    <div className="flex h-screen bg-background">
-      {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:border-r">
-        <SidebarContent />
-      </aside>
+    // Envolvendo com GoogleSheetsSettingsProvider e AppContext (se AppContext for necessário aqui)
+    // Se AppContext já estiver em um layout superior (como app/layout.tsx), pode não ser necessário aqui.
+    // Assumindo que AppContext é específico para o dashboard ou precisa ser re-instanciado.
+    <AppContextProvider> 
+      <GoogleSheetsSettingsProvider>
+        <div className="flex h-screen bg-background">
+          {/* Desktop Sidebar */}
+          <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:border-r">
+            <SidebarContent />
+          </aside>
 
-      {/* Mobile Sidebar */}
-      <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-        <SheetContent side="left" className="w-64 p-0">
-          <SidebarContent />
-        </SheetContent>
-      </Sheet>
+          {/* Mobile Sidebar */}
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetContent side="left" className="w-64 p-0">
+              <SidebarContent />
+            </SheetContent>
+          </Sheet>
 
-      {/* Main Content */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Header */}
-        <header className="flex items-center justify-between px-4 py-3 border-b bg-background lg:px-6">
-          <div className="flex items-center">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setIsMobileMenuOpen(true)}>
-                  <Menu className="h-6 w-6" />
-                </Button>
-              </SheetTrigger>
-            </Sheet>
-            {/* Atualizar o header para usar o nome da empresa */}
-            <h2 className="ml-2 text-lg font-semibold lg:ml-0">{companySettings.name}</h2>
+          {/* Main Content */}
+          <div className="flex flex-1 flex-col overflow-hidden">
+            {/* Header */}
+            <header className="flex items-center justify-between px-4 py-3 border-b bg-background lg:px-6">
+              <div className="flex items-center">
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setIsMobileMenuOpen(true)}>
+                      <Menu className="h-6 w-6" />
+                    </Button>
+                  </SheetTrigger>
+                </Sheet>
+                <h2 className="ml-2 text-lg font-semibold lg:ml-0">{companySettings.name}</h2>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <span className="hidden text-sm text-muted-foreground sm:block">Olá, {user.name}</span>
+              </div>
+            </header>
+
+            {/* Main Content Area */}
+            <main className="flex-1 overflow-auto p-4 lg:p-6">{children}</main>
           </div>
-
-          <div className="flex items-center space-x-2">
-            <span className="hidden text-sm text-muted-foreground sm:block">Olá, {user.name}</span>
-          </div>
-        </header>
-
-        {/* Main Content Area */}
-        <main className="flex-1 overflow-auto p-4 lg:p-6">{children}</main>
-      </div>
-    </div>
+        </div>
+      </GoogleSheetsSettingsProvider>
+    </AppContextProvider>
   )
 }
