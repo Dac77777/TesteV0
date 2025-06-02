@@ -45,6 +45,7 @@ export default function LoginPage() {
       }
     } catch (err) {
       setError("Erro ao fazer login")
+      console.error(err)
     } finally {
       setLoading(false)
     }
@@ -73,11 +74,13 @@ export default function LoginPage() {
       user = await authService.loginEmployee(username, password)
       if (user) {
         router.push("/funcionario")
-      } else {
-        setError("Usuário ou senha inválidos")
+        return
       }
+
+      setError("Usuário ou senha inválidos")
     } catch (err) {
       setError("Erro ao fazer login")
+      console.error(err)
     } finally {
       setLoading(false)
     }
@@ -142,7 +145,7 @@ export default function LoginPage() {
                   <Label htmlFor="emp-username">Usuário</Label>
                   <Input
                     id="emp-username"
-                    placeholder="Nome do funcionário"
+                    placeholder="Nome de usuário"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                   />

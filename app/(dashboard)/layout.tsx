@@ -35,9 +35,10 @@ export default function DashboardLayout({
   useEffect(() => {
     setMounted(true)
 
-    // Check if user is logged in and has admin role
+    // Verificação de segurança adicional no lado do cliente
     const currentUser = authService.getCurrentUser()
     if (!currentUser || currentUser.role !== "admin") {
+      authService.logout() // Limpar dados de autenticação inválidos
       router.push("/login")
       return
     }

@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Clock, User, Car } from "lucide-react"
+import { Plus, Clock, User, Car, CalendarIcon } from "lucide-react"
 
 // Mock data
 const initialAppointments = [
@@ -224,38 +224,49 @@ export default function AgendamentosPage() {
         <CardContent>
           {dayAppointments.length > 0 ? (
             <div className="space-y-4">
+              <div className="text-sm text-muted-foreground mb-2">{dayAppointments.length} serviço(s) agendado(s)</div>
               {dayAppointments
                 .sort((a, b) => a.time.localeCompare(b.time))
                 .map((appointment) => (
                   <div
                     key={appointment.id}
-                    className="border rounded-lg p-4 cursor-pointer hover:bg-muted/50"
+                    className="border rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors"
                     onClick={() => handleEditAppointment(appointment)}
                   >
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        <span className="font-medium">{appointment.time}</span>
+                        <Clock className="h-4 w-4 text-blue-600" />
+                        <span className="font-semibold text-lg">{appointment.time}</span>
                       </div>
                       {getStatusBadge(appointment.status)}
                     </div>
-                    <div className="space-y-1 text-sm">
+                    <div className="space-y-2 text-sm">
                       <div className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        <span>{appointment.client}</span>
+                        <User className="h-4 w-4 text-green-600" />
+                        <span className="font-medium">{appointment.client}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Car className="h-4 w-4" />
+                        <Car className="h-4 w-4 text-purple-600" />
                         <span>{appointment.vehicle}</span>
                       </div>
-                      <div className="text-muted-foreground">{appointment.service}</div>
-                      {appointment.notes && <div className="text-xs text-muted-foreground">{appointment.notes}</div>}
+                      <div className="bg-muted/50 p-2 rounded">
+                        <span className="font-medium text-blue-700">{appointment.service}</span>
+                      </div>
+                      {appointment.notes && (
+                        <div className="text-xs text-muted-foreground bg-amber-50 p-2 rounded border-l-2 border-amber-200">
+                          <strong>Obs:</strong> {appointment.notes}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
             </div>
           ) : (
-            <p className="text-center text-muted-foreground py-8">Nenhum agendamento para esta data</p>
+            <div className="text-center py-12">
+              <CalendarIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">Nenhum serviço agendado para esta data</p>
+              <p className="text-sm text-muted-foreground mt-1">Clique em "Novo Agendamento" para adicionar</p>
+            </div>
           )}
         </CardContent>
       </Card>

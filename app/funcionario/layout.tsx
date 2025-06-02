@@ -35,9 +35,10 @@ export default function FuncionarioLayout({
   useEffect(() => {
     setMounted(true)
 
-    // Check if user is logged in and has funcionario role
+    // Verificação de segurança adicional no lado do cliente
     const currentUser = authService.getCurrentUser()
     if (!currentUser || currentUser.role !== "funcionario") {
+      authService.logout() // Limpar dados de autenticação inválidos
       router.push("/login")
       return
     }

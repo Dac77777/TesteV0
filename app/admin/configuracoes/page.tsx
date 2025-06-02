@@ -254,7 +254,7 @@ export default function AdminConfiguracoesPage() {
   }
 
   const handleSaveEmployee = async () => {
-    if (!currentEmployee.name || !currentEmployee.email || !currentEmployee.password) {
+    if (!currentEmployee.name || !currentEmployee.email || !currentEmployee.password || !currentEmployee.username) {
       alert("Por favor, preencha todos os campos obrigatórios")
       return
     }

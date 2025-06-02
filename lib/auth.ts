@@ -4,12 +4,22 @@ import type { User } from "@/types/user"
 
 class AuthService {
   private currentUser: User | null = null
+  private tokenExpiryTime: number = 8 * 60 * 60 * 1000 // 8 horas em milissegundos
 
   constructor() {
     if (typeof window !== "undefined") {
       const savedUser = localStorage.getItem("currentUser")
       if (savedUser) {
         this.currentUser = JSON.parse(savedUser)
+
+        // Verificar se o token expirou
+        const tokenTimestamp = localStorage.getItem("tokenTimestamp")
+        if (tokenTimestamp) {
+          const timestamp = Number.parseInt(tokenTimestamp, 10)
+          if (Date.now() - timestamp > this.tokenExpiryTime) {
+            this.logout() // Token expirado, fazer logout
+          }
+        }
       }
     }
   }
@@ -34,8 +44,7 @@ class AuthService {
               isActive: true,
             }
 
-            this.currentUser = user
-            localStorage.setItem("currentUser", JSON.stringify(user))
+            this.setCurrentUser(user)
             return user
           }
         }
@@ -58,8 +67,7 @@ class AuthService {
         isActive: true,
       }
 
-      this.currentUser = user
-      localStorage.setItem("currentUser", JSON.stringify(user))
+      this.setCurrentUser(user)
       return user
     }
 
@@ -89,8 +97,7 @@ class AuthService {
               createdAt: employeeRow[6] || new Date().toISOString(),
             }
 
-            this.currentUser = user
-            localStorage.setItem("currentUser", JSON.stringify(user))
+            this.setCurrentUser(user)
             return user
           }
         }
@@ -101,16 +108,10 @@ class AuthService {
 
     // Fallback para dados locais
     const employees = await this.getEmployees()
-    const employee = employees.find(
-      (e) =>
-        (e.username === username || e.name.toLowerCase() === username.toLowerCase() || e.email === username) &&
-        e.password === password &&
-        e.isActive,
-    )
+    const employee = employees.find((e) => e.username === username && e.password === password && e.isActive)
 
     if (employee) {
-      this.currentUser = employee
-      localStorage.setItem("currentUser", JSON.stringify(employee))
+      this.setCurrentUser(employee)
       return employee
     }
 
@@ -137,8 +138,7 @@ class AuthService {
               isActive: true,
             }
 
-            this.currentUser = user
-            localStorage.setItem("currentUser", JSON.stringify(user))
+            this.setCurrentUser(user)
             return user
           }
         }
@@ -160,17 +160,64 @@ class AuthService {
         isActive: true,
       }
 
-      this.currentUser = user
-      localStorage.setItem("currentUser", JSON.stringify(user))
+      this.setCurrentUser(user)
       return user
     }
 
     return null
   }
 
+  private setCurrentUser(user: User): void {
+    this.currentUser = user
+
+    if (typeof window !== "undefined") {
+      // Salvar usuário no localStorage
+      localStorage.setItem("currentUser", JSON.stringify(user))
+
+      // Salvar timestamp do token
+      localStorage.setItem("tokenTimestamp", Date.now().toString())
+
+      // Salvar token e role em cookies para o middleware
+      this.setCookie("auth_token", this.generateToken(user), this.tokenExpiryTime / 1000)
+      this.setCookie("user_role", user.role, this.tokenExpiryTime / 1000)
+    }
+  }
+
+  private generateToken(user: User): string {
+    // Em produção, use uma biblioteca como JWT
+    // Este é um exemplo simples para demonstração
+    return btoa(
+      JSON.stringify({
+        id: user.id,
+        role: user.role,
+        timestamp: Date.now(),
+      }),
+    )
+  }
+
+  private setCookie(name: string, value: string, maxAge: number): void {
+    if (typeof document !== "undefined") {
+      document.cookie = `${name}=${value}; path=/; max-age=${maxAge}; SameSite=Strict; Secure`
+    }
+  }
+
+  private deleteCookie(name: string): void {
+    if (typeof document !== "undefined") {
+      document.cookie = `${name}=; path=/; max-age=0; SameSite=Strict; Secure`
+    }
+  }
+
   logout(): void {
     this.currentUser = null
-    localStorage.removeItem("currentUser")
+
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("currentUser")
+      localStorage.removeItem("tokenTimestamp")
+
+      // Remover cookies
+      this.deleteCookie("auth_token")
+      this.deleteCookie("user_role")
+    }
   }
 
   getCurrentUser(): User | null {
@@ -373,6 +420,17 @@ class AuthService {
       return JSON.parse(saved)
     }
     return { username: "admin", password: "admin123" }
+  }
+
+  // Verificar se o usuário está autenticado e tem o papel correto
+  verifyAccess(requiredRole?: string): boolean {
+    if (!this.currentUser) return false
+
+    if (requiredRole && this.currentUser.role !== requiredRole) {
+      return false
+    }
+
+    return true
   }
 }
 
