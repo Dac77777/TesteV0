@@ -23,7 +23,6 @@ export default function DashboardPage() {
     const currentUser = authService.getCurrentUser()
     setUser(currentUser)
 
-    // Simular dados do dashboard
     setStats({
       totalClients: 45,
       totalVehicles: 67,
@@ -40,13 +39,13 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
+      <div className="space-y-2">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Dashboard</h1>
         <p className="text-muted-foreground">Bem-vindo de volta, {user.name}!</p>
       </div>
 
       {/* Cards de Estatísticas */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total de Clientes</CardTitle>
@@ -93,7 +92,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Serviços Recentes */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Serviços Pendentes</CardTitle>
@@ -105,14 +104,17 @@ export default function DashboardPage() {
               { id: 2, client: "Maria Santos", service: "Revisão completa", vehicle: "Toyota Corolla 2019" },
               { id: 3, client: "Carlos Oliveira", service: "Alinhamento", vehicle: "Ford Focus 2021" },
             ].map((item) => (
-              <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
+              <div
+                key={item.id}
+                className="flex flex-col space-y-2 p-3 border rounded-lg sm:flex-row sm:items-center sm:justify-between sm:space-y-0"
+              >
+                <div className="space-y-1">
                   <p className="font-medium">{item.client}</p>
                   <p className="text-sm text-muted-foreground">
                     {item.service} - {item.vehicle}
                   </p>
                 </div>
-                <Badge variant="outline">
+                <Badge variant="outline" className="w-fit">
                   <Clock className="h-3 w-3 mr-1" />
                   Pendente
                 </Badge>
@@ -144,20 +146,22 @@ export default function DashboardPage() {
                 progress: 25,
               },
             ].map((item) => (
-              <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex-1">
-                  <p className="font-medium">{item.client}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {item.service} - {item.vehicle}
-                  </p>
-                  <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                    <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${item.progress}%` }}></div>
+              <div key={item.id} className="space-y-3 p-3 border rounded-lg">
+                <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+                  <div className="space-y-1">
+                    <p className="font-medium">{item.client}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {item.service} - {item.vehicle}
+                    </p>
                   </div>
+                  <Badge variant="default" className="w-fit">
+                    <Wrench className="h-3 w-3 mr-1" />
+                    {item.progress}%
+                  </Badge>
                 </div>
-                <Badge variant="default">
-                  <Wrench className="h-3 w-3 mr-1" />
-                  {item.progress}%
-                </Badge>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${item.progress}%` }}></div>
+                </div>
               </div>
             ))}
           </CardContent>
@@ -171,22 +175,22 @@ export default function DashboardPage() {
           <CardDescription>Acesso rápido às funcionalidades principais</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
             <Button className="h-20 flex flex-col gap-2" variant="outline">
               <Users className="h-6 w-6" />
-              <span>Novo Cliente</span>
+              <span className="text-xs sm:text-sm">Novo Cliente</span>
             </Button>
             <Button className="h-20 flex flex-col gap-2" variant="outline">
               <Car className="h-6 w-6" />
-              <span>Novo Veículo</span>
+              <span className="text-xs sm:text-sm">Novo Veículo</span>
             </Button>
             <Button className="h-20 flex flex-col gap-2" variant="outline">
               <Wrench className="h-6 w-6" />
-              <span>Novo Serviço</span>
+              <span className="text-xs sm:text-sm">Novo Serviço</span>
             </Button>
             <Button className="h-20 flex flex-col gap-2" variant="outline">
               <Calendar className="h-6 w-6" />
-              <span>Agendar</span>
+              <span className="text-xs sm:text-sm">Agendar</span>
             </Button>
           </div>
         </CardContent>

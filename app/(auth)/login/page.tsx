@@ -2,178 +2,281 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { AlertCircle, User, Users } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Wrench, AlertCircle, User, Users, Shield } from "lucide-react"
 import { authService } from "@/lib/auth"
+import { useAppContext } from "@/contexts/app-context"
 
 export default function LoginPage() {
+  const [adminCredentials, setAdminCredentials] = useState({
+    username: "",
+    password: "",
+  })
+  const [employeeCredentials, setEmployeeCredentials] = useState({
+    username: "",
+    password: "",
+  })
+  const [clientCpf, setClientCpf] = useState("")
   const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState("admin")
   const router = useRouter()
 
-  // Cliente
-  const [cpf, setCpf] = useState("")
+  // Usar o contexto para obter as configurações da empresa
+  const { companySettings, isLoading: isLoadingSettings } = useAppContext()
 
-  // Funcionário/Admin
-  const [username, setUsername] = useState("")
-  const [password, setPassword] = useState("")
-
-  // Limpar qualquer sessão existente ao carregar a página de login
-  useEffect(() => {
-    authService.logout()
-  }, [])
-
-  const handleClientLogin = async (e: React.FormEvent) => {
+  const handleAdminSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
-    setLoading(true)
-
-    if (!cpf) {
-      setError("Por favor, digite seu CPF")
-      setLoading(false)
-      return
-    }
+    setIsLoading(true)
 
     try {
-      const user = await authService.loginCliente(cpf)
+      const user = await authService.loginAdmin(adminCredentials.username, adminCredentials.password)
+
+      if (user) {
+        router.push("/dashboard")
+      } else {
+        setError("Credenciais de administrador inválidas")
+      }
+    } catch (err) {
+      setError("Erro ao fazer login. Tente novamente.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleEmployeeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+    setIsLoading(true)
+
+    try {
+      const user = await authService.loginEmployee(employeeCredentials.username, employeeCredentials.password)
+
+      if (user) {
+        router.push("/funcionario")
+      } else {
+        setError("Credenciais de funcionário inválidas")
+      }
+    } catch (err) {
+      setError("Erro ao fazer login. Tente novamente.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleClientSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+    setIsLoading(true)
+
+    try {
+      // Formatar CPF se necessário (remover pontos e traços)
+      const formattedCpf = clientCpf.replace(/[^\d]/g, "")
+
+      // Adicionar formatação padrão se tiver 11 dígitos
+      let cpfToSearch = clientCpf
+      if (formattedCpf.length === 11) {
+        cpfToSearch = `${formattedCpf.slice(0, 3)}.${formattedCpf.slice(3, 6)}.${formattedCpf.slice(6, 9)}-${formattedCpf.slice(9, 11)}`
+      }
+
+      const user = await authService.loginCliente(cpfToSearch)
+
       if (user) {
         router.push("/cliente")
       } else {
-        setError("CPF não encontrado")
+        setError("CPF não encontrado no sistema")
       }
     } catch (err) {
-      setError("Erro ao fazer login")
-      console.error(err)
+      setError("Erro ao fazer login. Tente novamente.")
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
-  const handleEmployeeLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setLoading(true)
+  const formatCpf = (value: string) => {
+    // Remove tudo que não é dígito
+    const numbers = value.replace(/[^\d]/g, "")
 
-    if (!username || !password) {
-      setError("Por favor, preencha todos os campos")
-      setLoading(false)
-      return
+    // Aplica a máscara do CPF
+    if (numbers.length <= 11) {
+      return numbers
+        .replace(/(\d{3})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d{1,2})/, "$1-$2")
     }
 
-    try {
-      // Tentar login como admin primeiro
-      let user = await authService.loginAdmin(username, password)
-      if (user) {
-        router.push("/dashboard")
-        return
-      }
-
-      // Se não for admin, tentar como funcionário
-      user = await authService.loginEmployee(username, password)
-      if (user) {
-        router.push("/funcionario")
-        return
-      }
-
-      setError("Usuário ou senha inválidos")
-    } catch (err) {
-      setError("Erro ao fazer login")
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
+    return value
   }
 
-  const formatCPF = (value: string) => {
-    const numbers = value.replace(/\D/g, "")
-    return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")
+  const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCpf(e.target.value)
+    setClientCpf(formatted)
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4 bg-gradient-to-br from-blue-50 to-indigo-100">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Workshop Manager</CardTitle>
-          <CardDescription>Escolha seu tipo de acesso</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="cliente" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="cliente" className="text-sm">
-                <User className="h-4 w-4 mr-1" />
-                Cliente
-              </TabsTrigger>
-              <TabsTrigger value="funcionario" className="text-sm">
-                <Users className="h-4 w-4 mr-1" />
-                Funcionário
-              </TabsTrigger>
-            </TabsList>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md space-y-8">
+        <div className="text-center">
+          <div className="flex justify-center">
+            <div className="flex items-center justify-center w-16 h-16 bg-primary rounded-full">
+              <Wrench className="w-8 h-8 text-primary-foreground" />
+            </div>
+          </div>
+          <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">
+            {isLoadingSettings ? "Carregando..." : companySettings.name}
+          </h2>
+          <p className="mt-2 text-sm text-gray-600">Faça login para acessar o sistema</p>
+        </div>
 
-            {error && (
-              <Alert variant="destructive" className="mt-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+        <Card>
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl text-center">Entrar</CardTitle>
+            <CardDescription className="text-center">Escolha seu tipo de acesso</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="admin" className="flex items-center gap-2">
+                  <Shield className="w-4 h-4" />
+                  <span className="hidden sm:inline">Admin</span>
+                </TabsTrigger>
+                <TabsTrigger value="employee" className="flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  <span className="hidden sm:inline">Funcionário</span>
+                </TabsTrigger>
+                <TabsTrigger value="client" className="flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  <span className="hidden sm:inline">Cliente</span>
+                </TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="cliente">
-              <form onSubmit={handleClientLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="cpf">CPF</Label>
-                  <Input
-                    id="cpf"
-                    placeholder="000.000.000-00"
-                    value={cpf}
-                    onChange={(e) => setCpf(formatCPF(e.target.value))}
-                    maxLength={14}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Digite seu CPF para acessar o status dos seus serviços
-                  </p>
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Entrando..." : "Acessar"}
-                </Button>
-              </form>
-            </TabsContent>
+              {error && (
+                <Alert variant="destructive" className="mt-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
 
-            <TabsContent value="funcionario">
-              <form onSubmit={handleEmployeeLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="emp-username">Usuário</Label>
-                  <Input
-                    id="emp-username"
-                    placeholder="Nome de usuário"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                  />
+              <TabsContent value="admin" className="space-y-4 mt-4">
+                <form onSubmit={handleAdminSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="admin-username">Usuário</Label>
+                    <Input
+                      id="admin-username"
+                      type="text"
+                      placeholder="Digite seu usuário"
+                      value={adminCredentials.username}
+                      onChange={(e) => setAdminCredentials({ ...adminCredentials, username: e.target.value })}
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="admin-password">Senha</Label>
+                    <Input
+                      id="admin-password"
+                      type="password"
+                      placeholder="Digite sua senha"
+                      value={adminCredentials.password}
+                      onChange={(e) => setAdminCredentials({ ...adminCredentials, password: e.target.value })}
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? "Entrando..." : "Entrar como Admin"}
+                  </Button>
+                </form>
+
+                <div className="p-3 bg-muted rounded-lg text-sm">
+                  <p className="font-medium">Credenciais padrão:</p>
+                  <p>Usuário: admin | Senha: admin123</p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="emp-password">Senha</Label>
-                  <Input
-                    id="emp-password"
-                    type="password"
-                    placeholder="Sua senha"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
+              </TabsContent>
+
+              <TabsContent value="employee" className="space-y-4 mt-4">
+                <form onSubmit={handleEmployeeSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="employee-username">Usuário</Label>
+                    <Input
+                      id="employee-username"
+                      type="text"
+                      placeholder="Digite seu usuário"
+                      value={employeeCredentials.username}
+                      onChange={(e) => setEmployeeCredentials({ ...employeeCredentials, username: e.target.value })}
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="employee-password">Senha</Label>
+                    <Input
+                      id="employee-password"
+                      type="password"
+                      placeholder="Digite sua senha"
+                      value={employeeCredentials.password}
+                      onChange={(e) => setEmployeeCredentials({ ...employeeCredentials, password: e.target.value })}
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? "Entrando..." : "Entrar como Funcionário"}
+                  </Button>
+                </form>
+
+                <div className="p-3 bg-muted rounded-lg text-sm">
+                  <p className="font-medium">Credenciais padrão:</p>
+                  <p>Usuário: jose | Senha: 123456</p>
+                  <p>Usuário: ana | Senha: 123456</p>
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Entrando..." : "Entrar"}
-                </Button>
-                <p className="text-xs text-muted-foreground text-center">Acesso para funcionários e administradores</p>
-              </form>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+              </TabsContent>
+
+              <TabsContent value="client" className="space-y-4 mt-4">
+                <form onSubmit={handleClientSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="client-cpf">CPF</Label>
+                    <Input
+                      id="client-cpf"
+                      type="text"
+                      placeholder="000.000.000-00"
+                      value={clientCpf}
+                      onChange={handleCpfChange}
+                      maxLength={14}
+                      required
+                      disabled={isLoading}
+                    />
+                    <p className="text-xs text-muted-foreground">Digite apenas seu CPF para acessar</p>
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? "Verificando..." : "Entrar como Cliente"}
+                  </Button>
+                </form>
+
+                <div className="p-3 bg-muted rounded-lg text-sm">
+                  <p className="font-medium">CPFs de teste:</p>
+                  <p>123.456.789-00 (João Silva)</p>
+                  <p>987.654.321-00 (Maria Oliveira)</p>
+                  <p>456.789.123-00 (Carlos Santos)</p>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

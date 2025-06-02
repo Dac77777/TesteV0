@@ -167,6 +167,27 @@ class AuthService {
     return null
   }
 
+  async login(usernameOrCpf: string, password?: string): Promise<User | null> {
+    // Se não tem senha, assumir que é login de cliente por CPF
+    if (!password) {
+      return await this.loginCliente(usernameOrCpf)
+    }
+
+    // Tentar login como admin primeiro
+    const adminUser = await this.loginAdmin(usernameOrCpf, password)
+    if (adminUser) {
+      return adminUser
+    }
+
+    // Tentar login como funcionário
+    const employeeUser = await this.loginEmployee(usernameOrCpf, password)
+    if (employeeUser) {
+      return employeeUser
+    }
+
+    return null
+  }
+
   private setCurrentUser(user: User): void {
     this.currentUser = user
 
@@ -389,11 +410,29 @@ class AuthService {
       const adminCredentials = { username: newUsername, password: newPassword }
       localStorage.setItem("adminCredentials", JSON.stringify(adminCredentials))
 
+      // Atualizar o usuário atual se for o admin
+      if (this.currentUser && this.currentUser.role === "admin") {
+        this.currentUser.username = newUsername
+        this.setCurrentUser(this.currentUser)
+      }
+
       // Sincronizar com Google Sheets
       await this.syncAdminToSheets(newUsername, newPassword)
 
+      console.log("Credenciais de admin atualizadas:", adminCredentials)
+
+      // Disparar evento para notificar outros componentes
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("adminCredentialsChanged", {
+            detail: adminCredentials,
+          }),
+        )
+      }
+
       return true
     } catch (error) {
+      console.error("Erro ao atualizar credenciais de admin:", error)
       return false
     }
   }
@@ -414,10 +453,19 @@ class AuthService {
     }
   }
 
-  private getAdminCredentials() {
+  getAdminCredentials() {
+    if (typeof window === "undefined") {
+      return { username: "admin", password: "admin123" }
+    }
+
     const saved = localStorage.getItem("adminCredentials")
     if (saved) {
-      return JSON.parse(saved)
+      try {
+        return JSON.parse(saved)
+      } catch (e) {
+        console.error("Erro ao analisar credenciais de admin:", e)
+        return { username: "admin", password: "admin123" }
+      }
     }
     return { username: "admin", password: "admin123" }
   }
@@ -431,6 +479,74 @@ class AuthService {
     }
 
     return true
+  }
+
+  // Adicionar método para obter configurações da empresa
+  async getCompanySettings() {
+    if (typeof window === "undefined") {
+      return {
+        name: "Workshop Manager",
+        address: "Rua das Flores, 123",
+        phone: "(11) 99999-9999",
+        email: "contato@oficina.com",
+        cnpj: "12.345.678/0001-90",
+        logo: "",
+        primaryColor: "#3b82f6",
+        secondaryColor: "#64748b",
+      }
+    }
+
+    const saved = localStorage.getItem("companySettings")
+    if (saved) {
+      try {
+        return JSON.parse(saved)
+      } catch (e) {
+        console.error("Erro ao analisar configurações da empresa:", e)
+        return {
+          name: "Workshop Manager",
+          address: "Rua das Flores, 123",
+          phone: "(11) 99999-9999",
+          email: "contato@oficina.com",
+          cnpj: "12.345.678/0001-90",
+          logo: "",
+          primaryColor: "#3b82f6",
+          secondaryColor: "#64748b",
+        }
+      }
+    }
+    return {
+      name: "Workshop Manager",
+      address: "Rua das Flores, 123",
+      phone: "(11) 99999-9999",
+      email: "contato@oficina.com",
+      cnpj: "12.345.678/0001-90",
+      logo: "",
+      primaryColor: "#3b82f6",
+      secondaryColor: "#64748b",
+    }
+  }
+
+  // Adicionar método para salvar configurações da empresa
+  async saveCompanySettings(settings: any) {
+    try {
+      localStorage.setItem("companySettings", JSON.stringify(settings))
+
+      console.log("Configurações da empresa salvas:", settings)
+
+      // Disparar evento para notificar outros componentes
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("companySettingsChanged", {
+            detail: settings,
+          }),
+        )
+      }
+
+      return true
+    } catch (e) {
+      console.error("Erro ao salvar configurações da empresa:", e)
+      return false
+    }
   }
 }
 

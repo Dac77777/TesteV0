@@ -81,9 +81,9 @@ export default function ClientesPage() {
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <CardTitle>Clientes</CardTitle>
-          <Button onClick={handleAddClient}>
+          <Button onClick={handleAddClient} className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             Novo Cliente
           </Button>
@@ -95,18 +95,51 @@ export default function ClientesPage() {
               placeholder="Buscar clientes..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
+              className="w-full sm:max-w-sm"
             />
           </div>
 
-          <div className="rounded-md border">
+          {/* Mobile View */}
+          <div className="block sm:hidden space-y-4">
+            {filteredClients.length > 0 ? (
+              filteredClients.map((client) => (
+                <Card key={client.id}>
+                  <CardContent className="p-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-medium">{client.name}</h3>
+                        <div className="flex space-x-2">
+                          <Button variant="ghost" size="icon" onClick={() => handleEditClient(client)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDeleteClient(client.id)}>
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{client.email}</p>
+                      <p className="text-sm text-muted-foreground">{client.phone}</p>
+                      <p className="text-sm text-muted-foreground">{client.address}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">Nenhum cliente encontrado</p>
+              </div>
+            )}
+          </div>
+
+          {/* Desktop View */}
+          <div className="hidden sm:block rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
-                  <TableHead>Email</TableHead>
+                  <TableHead className="hidden md:table-cell">Email</TableHead>
                   <TableHead>Telefone</TableHead>
-                  <TableHead>Endereço</TableHead>
+                  <TableHead className="hidden lg:table-cell">Endereço</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -115,9 +148,9 @@ export default function ClientesPage() {
                   filteredClients.map((client) => (
                     <TableRow key={client.id}>
                       <TableCell className="font-medium">{client.name}</TableCell>
-                      <TableCell>{client.email}</TableCell>
+                      <TableCell className="hidden md:table-cell">{client.email}</TableCell>
                       <TableCell>{client.phone}</TableCell>
-                      <TableCell>{client.address}</TableCell>
+                      <TableCell className="hidden lg:table-cell">{client.address}</TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="icon" onClick={() => handleEditClient(client)}>
                           <Edit className="h-4 w-4" />
@@ -142,7 +175,7 @@ export default function ClientesPage() {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+        <DialogContent className="w-[95vw] max-w-md">
           <DialogHeader>
             <DialogTitle>{isEditing ? "Editar Cliente" : "Novo Cliente"}</DialogTitle>
             <DialogDescription>
@@ -184,11 +217,13 @@ export default function ClientesPage() {
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+          <DialogFooter className="flex-col space-y-2 sm:flex-row sm:space-y-0">
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="w-full sm:w-auto">
               Cancelar
             </Button>
-            <Button onClick={handleSaveClient}>Salvar</Button>
+            <Button onClick={handleSaveClient} className="w-full sm:w-auto">
+              Salvar
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
