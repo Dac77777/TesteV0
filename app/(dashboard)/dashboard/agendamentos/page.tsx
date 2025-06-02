@@ -20,10 +20,12 @@ import { Badge } from "@/components/ui/badge"
 import { Plus, Clock, User, Car, CalendarIcon } from "lucide-react"
 
 // Mock data
+const today = new Date().toISOString().split("T")[0]
+
 const initialAppointments = [
   {
     id: 1,
-    date: "2023-06-01",
+    date: today,
     time: "09:00",
     client: "João Silva",
     vehicle: "ABC-1234 - Fiat Uno",
@@ -33,7 +35,7 @@ const initialAppointments = [
   },
   {
     id: 2,
-    date: "2023-06-01",
+    date: today,
     time: "11:30",
     client: "Maria Oliveira",
     vehicle: "DEF-5678 - Honda Civic",
@@ -43,7 +45,7 @@ const initialAppointments = [
   },
   {
     id: 3,
-    date: "2023-06-01",
+    date: today,
     time: "14:00",
     client: "Carlos Santos",
     vehicle: "GHI-9012 - VW Gol",
@@ -53,7 +55,7 @@ const initialAppointments = [
   },
   {
     id: 4,
-    date: "2023-06-02",
+    date: new Date(Date.now() + 86400000).toISOString().split("T")[0], // amanhã
     time: "10:00",
     client: "Ana Souza",
     vehicle: "JKL-3456 - Chevrolet Onix",
@@ -209,7 +211,22 @@ export default function AgendamentosPage() {
           <CardTitle>Calendário</CardTitle>
         </CardHeader>
         <CardContent>
-          <Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} className="rounded-md border" />
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={setSelectedDate}
+            className="rounded-md border"
+            modifiers={{
+              today: new Date(),
+            }}
+            modifiersStyles={{
+              today: {
+                backgroundColor: "#3b82f6",
+                color: "white",
+                fontWeight: "bold",
+              },
+            }}
+          />
         </CardContent>
       </Card>
 

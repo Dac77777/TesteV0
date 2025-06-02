@@ -736,7 +736,8 @@ export default function AdminConfiguracoesPage() {
               <div>
                 <CardTitle>Gerenciar Funcionários</CardTitle>
                 <CardDescription>
-                  Gerencie os funcionários e suas credenciais de acesso. Os dados são sincronizados com o Google Sheets.
+                  Gerencie os funcionários e suas credenciais de acesso. Total: {employees.length} funcionário(s)
+                  cadastrado(s).
                 </CardDescription>
               </div>
               <Button onClick={handleAddEmployee}>
