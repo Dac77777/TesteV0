@@ -19,21 +19,7 @@ import {
   SidebarGroupContent,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
-import {
-  Home,
-  Users,
-  Car,
-  Wrench,
-  Package,
-  FileText,
-  Calendar,
-  BarChart,
-  Settings,
-  LogOut,
-  Shield,
-  UserCheck,
-  Activity,
-} from "lucide-react"
+import { Home, Users, Car, Wrench, Package, FileText, Calendar, BarChart, Settings, LogOut, Shield } from "lucide-react"
 import { authService } from "@/lib/auth"
 
 export default function AdminLayout({
@@ -72,8 +58,6 @@ export default function AdminLayout({
     { icon: FileText, label: "Orçamentos", path: "/admin/orcamentos" },
     { icon: Calendar, label: "Agendamentos", path: "/admin/agendamentos" },
     { icon: BarChart, label: "Relatórios", path: "/admin/relatorios" },
-    { icon: UserCheck, label: "Funcionários", path: "/admin/funcionarios" },
-    { icon: Activity, label: "Logs de Atividade", path: "/admin/logs" },
     { icon: Settings, label: "Configurações", path: "/admin/configuracoes" },
   ]
 

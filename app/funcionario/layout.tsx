@@ -35,17 +35,22 @@ export default function FuncionarioLayout({
   useEffect(() => {
     setMounted(true)
 
-    if (!user || user.role !== "funcionario") {
+    // Check if user is logged in and has funcionario role
+    const currentUser = authService.getCurrentUser()
+    if (!currentUser || currentUser.role !== "funcionario") {
       router.push("/login")
+      return
     }
-  }, [user, router])
+
+    setUser(currentUser)
+  }, [router])
 
   const handleLogout = () => {
     authService.logout()
     router.push("/login")
   }
 
-  if (!mounted || !user) {
+  if (!mounted || !user || user.role !== "funcionario") {
     return null
   }
 

@@ -3,6 +3,7 @@ export interface User {
   name: string
   email?: string
   cpf?: string
+  username?: string
   role: "cliente" | "funcionario" | "admin"
   password?: string
   createdAt: string

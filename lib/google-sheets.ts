@@ -10,6 +10,8 @@ interface SheetsConfig {
     stock: string
     quotes: string
     appointments: string
+    employees: string
+    admin: string
   }
 }
 
@@ -20,6 +22,8 @@ interface SheetsData {
   stock?: any[]
   quotes?: any[]
   appointments?: any[]
+  employees?: any[]
+  admin?: any[]
 }
 
 class GoogleSheetsService {
@@ -130,6 +134,14 @@ class GoogleSheetsService {
         syncPromises.push(this.writeSheet(this.config.worksheetNames.appointments, localData.appointments))
       }
 
+      if (localData.employees) {
+        syncPromises.push(this.writeSheet(this.config.worksheetNames.employees, localData.employees))
+      }
+
+      if (localData.admin) {
+        syncPromises.push(this.writeSheet(this.config.worksheetNames.admin, localData.admin))
+      }
+
       await Promise.all(syncPromises)
 
       // Update last sync time
@@ -159,6 +171,8 @@ class GoogleSheetsService {
       data.stock = await this.readSheet(this.config.worksheetNames.stock)
       data.quotes = await this.readSheet(this.config.worksheetNames.quotes)
       data.appointments = await this.readSheet(this.config.worksheetNames.appointments)
+      data.employees = await this.readSheet(this.config.worksheetNames.employees)
+      data.admin = await this.readSheet(this.config.worksheetNames.admin)
 
       return data
     } catch (error) {
@@ -172,15 +186,27 @@ class GoogleSheetsService {
     switch (worksheetName) {
       case "Clientes":
         return [
-          ["ID", "Nome", "Email", "Telefone", "Endereço"],
-          [1, "João Silva", "joao@example.com", "(11) 98765-4321", "Rua A, 123"],
-          [2, "Maria Oliveira", "maria@example.com", "(11) 91234-5678", "Av. B, 456"],
+          ["ID", "Nome", "Email", "Telefone", "Endereço", "CPF"],
+          [1, "João Silva", "joao@example.com", "(11) 98765-4321", "Rua A, 123", "123.456.789-00"],
+          [2, "Maria Oliveira", "maria@example.com", "(11) 91234-5678", "Av. B, 456", "987.654.321-00"],
+          [3, "Carlos Santos", "carlos@example.com", "(11) 99876-5432", "Rua C, 789", "456.789.123-00"],
         ]
       case "Veículos":
         return [
           ["ID", "Placa", "Marca", "Modelo", "Ano", "Cor", "Cliente"],
           [1, "ABC-1234", "Fiat", "Uno", "2018", "Branco", "João Silva"],
           [2, "DEF-5678", "Honda", "Civic", "2020", "Preto", "Maria Oliveira"],
+        ]
+      case "Funcionários":
+        return [
+          ["ID", "Nome", "Email", "Usuario", "Senha", "Ativo", "Data Criação"],
+          ["func1", "José Mecânico", "jose@oficina.com", "jose", "123456", "true", "2023-01-01"],
+          ["func2", "Ana Atendente", "ana@oficina.com", "ana", "123456", "true", "2023-01-01"],
+        ]
+      case "Admin":
+        return [
+          ["Usuario", "Senha", "Nome", "Email"],
+          ["admin", "admin123", "Administrador", "admin@oficina.com"],
         ]
       default:
         return []

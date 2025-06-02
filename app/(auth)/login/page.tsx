@@ -7,72 +7,164 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { AlertCircle } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { AlertCircle, User, Users } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { authService } from "@/lib/auth"
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Cliente
+  const [cpf, setCpf] = useState("")
+
+  // Funcionário/Admin
+  const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
+
+  const handleClientLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+    setLoading(true)
 
-    // Simple validation
-    if (!email || !password) {
-      setError("Por favor, preencha todos os campos")
+    if (!cpf) {
+      setError("Por favor, digite seu CPF")
+      setLoading(false)
       return
     }
 
-    // Mock authentication - in a real app, you would call an API
-    if (email === "admin@example.com" && password === "password") {
-      // Store authentication state
-      localStorage.setItem("user", JSON.stringify({ email, role: "admin" }))
-      router.push("/dashboard")
-    } else {
-      setError("Credenciais inválidas")
+    try {
+      const user = await authService.loginCliente(cpf)
+      if (user) {
+        router.push("/cliente")
+      } else {
+        setError("CPF não encontrado")
+      }
+    } catch (err) {
+      setError("Erro ao fazer login")
+    } finally {
+      setLoading(false)
     }
   }
 
+  const handleEmployeeLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+    setLoading(true)
+
+    if (!username || !password) {
+      setError("Por favor, preencha todos os campos")
+      setLoading(false)
+      return
+    }
+
+    try {
+      // Tentar login como admin primeiro
+      let user = await authService.loginAdmin(username, password)
+      if (user) {
+        router.push("/dashboard")
+        return
+      }
+
+      // Se não for admin, tentar como funcionário
+      user = await authService.loginEmployee(username, password)
+      if (user) {
+        router.push("/funcionario")
+      } else {
+        setError("Usuário ou senha inválidos")
+      }
+    } catch (err) {
+      setError("Erro ao fazer login")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const formatCPF = (value: string) => {
+    const numbers = value.replace(/\D/g, "")
+    return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
+    <div className="flex min-h-screen items-center justify-center p-4 bg-gradient-to-br from-blue-50 to-indigo-100">
       <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Login</CardTitle>
-          <CardDescription>Acesse sua conta para gerenciar a oficina</CardDescription>
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">Workshop Manager</CardTitle>
+          <CardDescription>Escolha seu tipo de acesso</CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
+        <CardContent>
+          <Tabs defaultValue="cliente" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="cliente" className="text-sm">
+                <User className="h-4 w-4 mr-1" />
+                Cliente
+              </TabsTrigger>
+              <TabsTrigger value="funcionario" className="text-sm">
+                <Users className="h-4 w-4 mr-1" />
+                Funcionário
+              </TabsTrigger>
+            </TabsList>
+
             {error && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="mt-4">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button type="submit" className="w-full">
-              Entrar
-            </Button>
-          </CardFooter>
-        </form>
+
+            <TabsContent value="cliente">
+              <form onSubmit={handleClientLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cpf">CPF</Label>
+                  <Input
+                    id="cpf"
+                    placeholder="000.000.000-00"
+                    value={cpf}
+                    onChange={(e) => setCpf(formatCPF(e.target.value))}
+                    maxLength={14}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Digite seu CPF para acessar o status dos seus serviços
+                  </p>
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Entrando..." : "Acessar"}
+                </Button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="funcionario">
+              <form onSubmit={handleEmployeeLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="emp-username">Usuário</Label>
+                  <Input
+                    id="emp-username"
+                    placeholder="Nome do funcionário"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="emp-password">Senha</Label>
+                  <Input
+                    id="emp-password"
+                    type="password"
+                    placeholder="Sua senha"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Entrando..." : "Entrar"}
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">Acesso para funcionários e administradores</p>
+              </form>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
       </Card>
     </div>
   )

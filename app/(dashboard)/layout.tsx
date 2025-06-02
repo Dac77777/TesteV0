@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Home, Users, Car, Wrench, Package, FileText, Calendar, BarChart, Settings, LogOut } from "lucide-react"
+import { authService } from "@/lib/auth"
 
 export default function DashboardLayout({
   children,
@@ -27,25 +28,29 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const [mounted, setMounted] = useState(false)
+  const [user, setUser] = useState(authService.getCurrentUser())
   const router = useRouter()
   const pathname = usePathname()
 
   useEffect(() => {
     setMounted(true)
 
-    // Check if user is logged in
-    const user = localStorage.getItem("user")
-    if (!user) {
+    // Check if user is logged in and has admin role
+    const currentUser = authService.getCurrentUser()
+    if (!currentUser || currentUser.role !== "admin") {
       router.push("/login")
+      return
     }
+
+    setUser(currentUser)
   }, [router])
 
   const handleLogout = () => {
-    localStorage.removeItem("user")
+    authService.logout()
     router.push("/login")
   }
 
-  if (!mounted) {
+  if (!mounted || !user || user.role !== "admin") {
     return null
   }
 

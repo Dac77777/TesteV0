@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { AlertCircle, User, Users, Shield } from "lucide-react"
+import { AlertCircle, User, Users } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { authService } from "@/lib/auth"
 
@@ -62,34 +62,17 @@ export default function LoginPage() {
     }
 
     try {
-      const user = await authService.loginEmployee(username, password)
-      if (user) {
-        router.push("/funcionario")
-      } else {
-        setError("Usuário ou senha inválidos")
-      }
-    } catch (err) {
-      setError("Erro ao fazer login")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleAdminLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setLoading(true)
-
-    if (!username || !password) {
-      setError("Por favor, preencha todos os campos")
-      setLoading(false)
-      return
-    }
-
-    try {
-      const user = await authService.loginAdmin(username, password)
+      // Tentar login como admin primeiro
+      let user = await authService.loginAdmin(username, password)
       if (user) {
         router.push("/admin")
+        return
+      }
+
+      // Se não for admin, tentar como funcionário
+      user = await authService.loginEmployee(username, password)
+      if (user) {
+        router.push("/funcionario")
       } else {
         setError("Usuário ou senha inválidos")
       }
@@ -114,18 +97,14 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="cliente" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="cliente" className="text-xs">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="cliente" className="text-sm">
                 <User className="h-4 w-4 mr-1" />
                 Cliente
               </TabsTrigger>
-              <TabsTrigger value="funcionario" className="text-xs">
+              <TabsTrigger value="funcionario" className="text-sm">
                 <Users className="h-4 w-4 mr-1" />
                 Funcionário
-              </TabsTrigger>
-              <TabsTrigger value="admin" className="text-xs">
-                <Shield className="h-4 w-4 mr-1" />
-                Admin
               </TabsTrigger>
             </TabsList>
 
@@ -181,35 +160,7 @@ export default function LoginPage() {
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Entrando..." : "Entrar"}
                 </Button>
-                <p className="text-xs text-muted-foreground text-center">Usuário demo: José Mecânico / Senha: 123456</p>
-              </form>
-            </TabsContent>
-
-            <TabsContent value="admin">
-              <form onSubmit={handleAdminLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="admin-username">Usuário</Label>
-                  <Input
-                    id="admin-username"
-                    placeholder="admin"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="admin-password">Senha</Label>
-                  <Input
-                    id="admin-password"
-                    type="password"
-                    placeholder="Senha do administrador"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Entrando..." : "Entrar"}
-                </Button>
-                <p className="text-xs text-muted-foreground text-center">Usuário: admin / Senha: admin123</p>
+                <p className="text-xs text-muted-foreground text-center">Acesso para funcionários e administradores</p>
               </form>
             </TabsContent>
           </Tabs>
