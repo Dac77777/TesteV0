@@ -63,6 +63,7 @@ export default function DashboardLayout({
     { icon: Package, label: "Estoque", path: "/dashboard/estoque" },
     { icon: FileText, label: "Orçamentos", path: "/dashboard/orcamentos" },
     { icon: Calendar, label: "Agendamentos", path: "/dashboard/agendamentos" },
+    { icon: Users, label: "Funcionários", path: "/dashboard/funcionarios" },
     { icon: BarChart, label: "Relatórios", path: "/dashboard/relatorios" },
     { icon: Settings, label: "Configurações", path: "/dashboard/configuracoes" },
   ]

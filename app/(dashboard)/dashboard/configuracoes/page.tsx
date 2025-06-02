@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Settings,
   Database,
@@ -18,6 +19,8 @@ import {
   RefreshCw,
   Download,
   Upload,
+  Key,
+  User,
 } from "lucide-react"
 
 export default function ConfiguracoesPage() {
@@ -48,6 +51,13 @@ export default function ConfiguracoesPage() {
     phone: "(11) 99999-9999",
     email: "contato@oficina.com",
     cnpj: "12.345.678/0001-90",
+  })
+
+  // Admin password settings
+  const [passwordSettings, setPasswordSettings] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
   })
 
   const handleConnectSheets = async () => {
@@ -95,6 +105,31 @@ export default function ConfiguracoesPage() {
     alert("Configurações salvas com sucesso!")
   }
 
+  const handleChangePassword = () => {
+    if (!passwordSettings.currentPassword || !passwordSettings.newPassword || !passwordSettings.confirmPassword) {
+      alert("Por favor, preencha todos os campos de senha")
+      return
+    }
+
+    if (passwordSettings.newPassword !== passwordSettings.confirmPassword) {
+      alert("A nova senha e a confirmação não coincidem")
+      return
+    }
+
+    if (passwordSettings.newPassword.length < 6) {
+      alert("A nova senha deve ter pelo menos 6 caracteres")
+      return
+    }
+
+    // Simulate password change
+    alert("Senha alterada com sucesso!")
+    setPasswordSettings({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    })
+  }
+
   useEffect(() => {
     // Load settings from localStorage
     const savedCompanySettings = localStorage.getItem("companySettings")
@@ -121,355 +156,344 @@ export default function ConfiguracoesPage() {
         </div>
       </div>
 
-      {/* Google Sheets Integration */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Database className="h-5 w-5" />
-            Integração Google Sheets
-          </CardTitle>
-          <CardDescription>Configure a sincronização automática com Google Sheets</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span>Status da Conexão:</span>
-              {isConnected ? (
-                <Badge variant="outline" className="bg-green-100 text-green-800">
-                  <CheckCircle className="mr-1 h-3 w-3" />
-                  Conectado
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="bg-red-100 text-red-800">
-                  <XCircle className="mr-1 h-3 w-3" />
-                  Desconectado
-                </Badge>
-              )}
-            </div>
-            {isConnected && <div className="text-sm text-muted-foreground">Última sincronização: {lastSync}</div>}
-          </div>
+      <Tabs defaultValue="empresa" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="empresa">Dados da Empresa</TabsTrigger>
+          <TabsTrigger value="admin">Administrador</TabsTrigger>
+          <TabsTrigger value="integracao">Integração Google Sheets</TabsTrigger>
+          <TabsTrigger value="dados">Gerenciamento de Dados</TabsTrigger>
+        </TabsList>
 
-          {!isConnected ? (
-            <div className="space-y-4">
+        <TabsContent value="empresa">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                Dados da Empresa
+              </CardTitle>
+              <CardDescription>Configure as informações da sua oficina</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="companyName">Nome da Empresa</Label>
+                  <Input
+                    id="companyName"
+                    value={companySettings.name}
+                    onChange={(e) =>
+                      setCompanySettings({
+                        ...companySettings,
+                        name: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="cnpj">CNPJ</Label>
+                  <Input
+                    id="cnpj"
+                    value={companySettings.cnpj}
+                    onChange={(e) =>
+                      setCompanySettings({
+                        ...companySettings,
+                        cnpj: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+              </div>
+
               <div className="grid gap-2">
-                <Label htmlFor="spreadsheetId">ID da Planilha</Label>
+                <Label htmlFor="address">Endereço</Label>
                 <Input
-                  id="spreadsheetId"
-                  placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
-                  value={sheetsConfig.spreadsheetId}
+                  id="address"
+                  value={companySettings.address}
                   onChange={(e) =>
-                    setSheetsConfig({
-                      ...sheetsConfig,
-                      spreadsheetId: e.target.value,
+                    setCompanySettings({
+                      ...companySettings,
+                      address: e.target.value,
                     })
                   }
                 />
-                <p className="text-xs text-muted-foreground">Encontre o ID na URL da sua planilha Google Sheets</p>
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="phone">Telefone</Label>
+                  <Input
+                    id="phone"
+                    value={companySettings.phone}
+                    onChange={(e) =>
+                      setCompanySettings({
+                        ...companySettings,
+                        phone: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={companySettings.email}
+                    onChange={(e) =>
+                      setCompanySettings({
+                        ...companySettings,
+                        email: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <Button onClick={handleSaveSettings}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Salvar Configurações
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="admin">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Configurações do Administrador
+              </CardTitle>
+              <CardDescription>Altere suas credenciais de acesso e senha</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div className="grid gap-2">
-                <Label htmlFor="serviceAccountKey">Chave da Conta de Serviço (JSON)</Label>
-                <Textarea
-                  id="serviceAccountKey"
-                  placeholder='{"type": "service_account", "project_id": "..."}'
-                  value={sheetsConfig.serviceAccountKey}
+                <Label htmlFor="currentPassword">Senha Atual *</Label>
+                <Input
+                  id="currentPassword"
+                  type="password"
+                  placeholder="Digite sua senha atual"
+                  value={passwordSettings.currentPassword}
                   onChange={(e) =>
-                    setSheetsConfig({
-                      ...sheetsConfig,
-                      serviceAccountKey: e.target.value,
+                    setPasswordSettings({
+                      ...passwordSettings,
+                      currentPassword: e.target.value,
                     })
                   }
-                  rows={4}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Cole aqui o conteúdo do arquivo JSON da conta de serviço
-                </p>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="newPassword">Nova Senha *</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  placeholder="Digite a nova senha (mín. 6 caracteres)"
+                  value={passwordSettings.newPassword}
+                  onChange={(e) =>
+                    setPasswordSettings({
+                      ...passwordSettings,
+                      newPassword: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="confirmPassword">Confirmar Nova Senha *</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="Confirme a nova senha"
+                  value={passwordSettings.confirmPassword}
+                  onChange={(e) =>
+                    setPasswordSettings({
+                      ...passwordSettings,
+                      confirmPassword: e.target.value,
+                    })
+                  }
+                />
               </div>
 
-              <Button
-                onClick={handleConnectSheets}
-                disabled={!sheetsConfig.spreadsheetId || !sheetsConfig.serviceAccountKey || isSyncing}
-              >
-                {isSyncing ? (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    Conectando...
-                  </>
-                ) : (
-                  <>
-                    <Database className="mr-2 h-4 w-4" />
-                    Conectar ao Google Sheets
-                  </>
-                )}
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
               <Alert>
-                <CheckCircle className="h-4 w-4" />
-                <AlertTitle>Conectado com sucesso!</AlertTitle>
+                <Key className="h-4 w-4" />
+                <AlertTitle>Segurança</AlertTitle>
                 <AlertDescription>
-                  Seus dados estão sendo sincronizados automaticamente com o Google Sheets.
+                  A senha deve ter pelo menos 6 caracteres. Após alterar a senha, você precisará fazer login novamente.
                 </AlertDescription>
               </Alert>
 
+              <div className="flex justify-end">
+                <Button onClick={handleChangePassword}>
+                  <Key className="mr-2 h-4 w-4" />
+                  Alterar Senha
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="integracao">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Database className="h-5 w-5" />
+                Integração Google Sheets
+              </CardTitle>
+              <CardDescription>Configure a sincronização automática com Google Sheets</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Switch id="autoSync" checked={autoSync} onCheckedChange={setAutoSync} />
-                  <Label htmlFor="autoSync">Sincronização Automática</Label>
+                <div className="flex items-center gap-2">
+                  <span>Status da Conexão:</span>
+                  {isConnected ? (
+                    <Badge variant="outline" className="bg-green-100 text-green-800">
+                      <CheckCircle className="mr-1 h-3 w-3" />
+                      Conectado
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-red-100 text-red-800">
+                      <XCircle className="mr-1 h-3 w-3" />
+                      Desconectado
+                    </Badge>
+                  )}
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={handleSyncNow} disabled={isSyncing}>
+                {isConnected && <div className="text-sm text-muted-foreground">Última sincronização: {lastSync}</div>}
+              </div>
+
+              {!isConnected ? (
+                <div className="space-y-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="spreadsheetId">ID da Planilha</Label>
+                    <Input
+                      id="spreadsheetId"
+                      placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
+                      value={sheetsConfig.spreadsheetId}
+                      onChange={(e) =>
+                        setSheetsConfig({
+                          ...sheetsConfig,
+                          spreadsheetId: e.target.value,
+                        })
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">Encontre o ID na URL da sua planilha Google Sheets</p>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="serviceAccountKey">Chave da Conta de Serviço (JSON)</Label>
+                    <Textarea
+                      id="serviceAccountKey"
+                      placeholder='{"type": "service_account", "project_id": "..."}'
+                      value={sheetsConfig.serviceAccountKey}
+                      onChange={(e) =>
+                        setSheetsConfig({
+                          ...sheetsConfig,
+                          serviceAccountKey: e.target.value,
+                        })
+                      }
+                      rows={4}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Cole aqui o conteúdo do arquivo JSON da conta de serviço
+                    </p>
+                  </div>
+
+                  <Button
+                    onClick={handleConnectSheets}
+                    disabled={!sheetsConfig.spreadsheetId || !sheetsConfig.serviceAccountKey || isSyncing}
+                  >
                     {isSyncing ? (
                       <>
                         <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                        Sincronizando...
+                        Conectando...
                       </>
                     ) : (
                       <>
-                        <Sync className="mr-2 h-4 w-4" />
-                        Sincronizar Agora
+                        <Database className="mr-2 h-4 w-4" />
+                        Conectar ao Google Sheets
                       </>
                     )}
                   </Button>
-                  <Button variant="destructive" onClick={handleDisconnectSheets}>
-                    Desconectar
-                  </Button>
                 </div>
-              </div>
+              ) : (
+                <div className="space-y-4">
+                  <Alert>
+                    <CheckCircle className="h-4 w-4" />
+                    <AlertTitle>Conectado com sucesso!</AlertTitle>
+                    <AlertDescription>
+                      Seus dados estão sendo sincronizados automaticamente com o Google Sheets.
+                    </AlertDescription>
+                  </Alert>
 
-              {autoSync && (
-                <div className="grid gap-2">
-                  <Label htmlFor="syncInterval">Intervalo de Sincronização (minutos)</Label>
-                  <Input
-                    id="syncInterval"
-                    type="number"
-                    min="1"
-                    max="60"
-                    value={syncInterval}
-                    onChange={(e) => setSyncInterval(Number.parseInt(e.target.value) || 5)}
-                  />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Switch id="autoSync" checked={autoSync} onCheckedChange={setAutoSync} />
+                      <Label htmlFor="autoSync">Sincronização Automática</Label>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={handleSyncNow} disabled={isSyncing}>
+                        {isSyncing ? (
+                          <>
+                            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                            Sincronizando...
+                          </>
+                        ) : (
+                          <>
+                            <Sync className="mr-2 h-4 w-4" />
+                            Sincronizar Agora
+                          </>
+                        )}
+                      </Button>
+                      <Button variant="destructive" onClick={handleDisconnectSheets}>
+                        Desconectar
+                      </Button>
+                    </div>
+                  </div>
+
+                  {autoSync && (
+                    <div className="grid gap-2">
+                      <Label htmlFor="syncInterval">Intervalo de Sincronização (minutos)</Label>
+                      <Input
+                        id="syncInterval"
+                        type="number"
+                        min="1"
+                        max="60"
+                        value={syncInterval}
+                        onChange={(e) => setSyncInterval(Number.parseInt(e.target.value) || 5)}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-              <div className="grid gap-4">
-                <h4 className="font-medium">Nomes das Planilhas</h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label>Clientes</Label>
-                    <Input
-                      value={sheetsConfig.worksheetNames.clients}
-                      onChange={(e) =>
-                        setSheetsConfig({
-                          ...sheetsConfig,
-                          worksheetNames: {
-                            ...sheetsConfig.worksheetNames,
-                            clients: e.target.value,
-                          },
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Veículos</Label>
-                    <Input
-                      value={sheetsConfig.worksheetNames.vehicles}
-                      onChange={(e) =>
-                        setSheetsConfig({
-                          ...sheetsConfig,
-                          worksheetNames: {
-                            ...sheetsConfig.worksheetNames,
-                            vehicles: e.target.value,
-                          },
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Serviços</Label>
-                    <Input
-                      value={sheetsConfig.worksheetNames.services}
-                      onChange={(e) =>
-                        setSheetsConfig({
-                          ...sheetsConfig,
-                          worksheetNames: {
-                            ...sheetsConfig.worksheetNames,
-                            services: e.target.value,
-                          },
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Estoque</Label>
-                    <Input
-                      value={sheetsConfig.worksheetNames.stock}
-                      onChange={(e) =>
-                        setSheetsConfig({
-                          ...sheetsConfig,
-                          worksheetNames: {
-                            ...sheetsConfig.worksheetNames,
-                            stock: e.target.value,
-                          },
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Orçamentos</Label>
-                    <Input
-                      value={sheetsConfig.worksheetNames.quotes}
-                      onChange={(e) =>
-                        setSheetsConfig({
-                          ...sheetsConfig,
-                          worksheetNames: {
-                            ...sheetsConfig.worksheetNames,
-                            quotes: e.target.value,
-                          },
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Agendamentos</Label>
-                    <Input
-                      value={sheetsConfig.worksheetNames.appointments}
-                      onChange={(e) =>
-                        setSheetsConfig({
-                          ...sheetsConfig,
-                          worksheetNames: {
-                            ...sheetsConfig.worksheetNames,
-                            appointments: e.target.value,
-                          },
-                        })
-                      }
-                    />
-                  </div>
-                </div>
+        <TabsContent value="dados">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Database className="h-5 w-5" />
+                Gerenciamento de Dados
+              </CardTitle>
+              <CardDescription>Importe e exporte dados do sistema</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4">
+                <Button variant="outline" onClick={handleExportData}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Exportar Dados
+                </Button>
+                <Button variant="outline" onClick={handleImportData}>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Importar Dados
+                </Button>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Data Management */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Database className="h-5 w-5" />
-            Gerenciamento de Dados
-          </CardTitle>
-          <CardDescription>Importe e exporte dados do sistema</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
-            <Button variant="outline" onClick={handleExportData}>
-              <Download className="mr-2 h-4 w-4" />
-              Exportar Dados
-            </Button>
-            <Button variant="outline" onClick={handleImportData}>
-              <Upload className="mr-2 h-4 w-4" />
-              Importar Dados
-            </Button>
-          </div>
-          <p className="text-sm text-muted-foreground mt-2">
-            Exporte seus dados para backup ou importe dados de outros sistemas
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Company Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Dados da Empresa
-          </CardTitle>
-          <CardDescription>Configure as informações da sua oficina</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="companyName">Nome da Empresa</Label>
-              <Input
-                id="companyName"
-                value={companySettings.name}
-                onChange={(e) =>
-                  setCompanySettings({
-                    ...companySettings,
-                    name: e.target.value,
-                  })
-                }
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="cnpj">CNPJ</Label>
-              <Input
-                id="cnpj"
-                value={companySettings.cnpj}
-                onChange={(e) =>
-                  setCompanySettings({
-                    ...companySettings,
-                    cnpj: e.target.value,
-                  })
-                }
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="address">Endereço</Label>
-            <Input
-              id="address"
-              value={companySettings.address}
-              onChange={(e) =>
-                setCompanySettings({
-                  ...companySettings,
-                  address: e.target.value,
-                })
-              }
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="phone">Telefone</Label>
-              <Input
-                id="phone"
-                value={companySettings.phone}
-                onChange={(e) =>
-                  setCompanySettings({
-                    ...companySettings,
-                    phone: e.target.value,
-                  })
-                }
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={companySettings.email}
-                onChange={(e) =>
-                  setCompanySettings({
-                    ...companySettings,
-                    email: e.target.value,
-                  })
-                }
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Save Button */}
-      <div className="flex justify-end">
-        <Button onClick={handleSaveSettings}>
-          <Settings className="mr-2 h-4 w-4" />
-          Salvar Configurações
-        </Button>
-      </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                Exporte seus dados para backup ou importe dados de outros sistemas
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

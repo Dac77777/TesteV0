@@ -5,10 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
+import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
 import {
   Dialog,
   DialogContent,
@@ -24,129 +24,99 @@ import {
   Edit,
   Trash,
   Search,
-  BarChart3,
   Users,
-  Wrench,
-  FileText,
-  Star,
   TrendingUp,
   Clock,
+  Star,
   DollarSign,
+  Calendar,
+  Wrench,
+  FileText,
 } from "lucide-react"
 import { authService } from "@/lib/auth"
 import { activityLogger } from "@/lib/activity-logger"
 import type { User } from "@/types/user"
 
-// Tipo para métricas de funcionário
-interface EmployeeMetrics {
-  id: string
-  name: string
-  atendimentos: number
-  servicosRealizados: number
-  orcamentosFeitos: number
-  valorGerado: number
-  tempoMedio: number // em minutos
-  satisfacaoCliente: number // 0-5
-  eficiencia: number // 0-100%
-  historico: {
-    mes: string
-    atendimentos: number
-    servicos: number
-    orcamentos: number
-    valor: number
-  }[]
+// Mock data para métricas
+const mockMetrics = {
+  func1: {
+    atendimentos: 45,
+    servicos: 38,
+    orcamentos: 12,
+    valorGerado: 15750.0,
+    satisfacao: 4.8,
+    eficiencia: 92,
+    tempoMedio: 85,
+    historico: [
+      { mes: "Jan", atendimentos: 8, servicos: 6, orcamentos: 2 },
+      { mes: "Fev", atendimentos: 12, servicos: 10, orcamentos: 3 },
+      { mes: "Mar", atendimentos: 15, servicos: 12, orcamentos: 4 },
+      { mes: "Abr", atendimentos: 10, servicos: 10, orcamentos: 3 },
+    ],
+    ultimosServicos: [
+      {
+        id: 1,
+        cliente: "João Silva",
+        veiculo: "Honda Civic",
+        servico: "Troca de óleo",
+        data: "2024-01-15",
+        valor: 150,
+      },
+      { id: 2, cliente: "Maria Santos", veiculo: "Toyota Corolla", servico: "Revisão", data: "2024-01-14", valor: 300 },
+      { id: 3, cliente: "Carlos Lima", veiculo: "Ford Focus", servico: "Freios", data: "2024-01-13", valor: 450 },
+    ],
+  },
+  func2: {
+    atendimentos: 32,
+    servicos: 28,
+    orcamentos: 8,
+    valorGerado: 11200.0,
+    satisfacao: 4.6,
+    eficiencia: 88,
+    tempoMedio: 95,
+    historico: [
+      { mes: "Jan", atendimentos: 6, servicos: 5, orcamentos: 1 },
+      { mes: "Fev", atendimentos: 9, servicos: 8, orcamentos: 2 },
+      { mes: "Mar", atendimentos: 11, servicos: 9, orcamentos: 3 },
+      { mes: "Abr", atendimentos: 6, servicos: 6, orcamentos: 2 },
+    ],
+    ultimosServicos: [
+      { id: 1, cliente: "Ana Costa", veiculo: "Volkswagen Gol", servico: "Pneus", data: "2024-01-15", valor: 400 },
+      {
+        id: 2,
+        cliente: "Pedro Oliveira",
+        veiculo: "Chevrolet Onix",
+        servico: "Bateria",
+        data: "2024-01-14",
+        valor: 250,
+      },
+      { id: 3, cliente: "Lucia Ferreira", veiculo: "Fiat Uno", servico: "Alinhamento", data: "2024-01-12", valor: 80 },
+    ],
+  },
 }
 
 export default function FuncionariosPage() {
   const [employees, setEmployees] = useState<User[]>([])
-  const [metrics, setMetrics] = useState<EmployeeMetrics[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [isEmployeeDialogOpen, setIsEmployeeDialogOpen] = useState(false)
   const [currentEmployee, setCurrentEmployee] = useState<Partial<User>>({
     name: "",
     email: "",
+    username: "",
     password: "",
     role: "funcionario",
     isActive: true,
   })
   const [isEditing, setIsEditing] = useState(false)
-  const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null)
+  const [selectedEmployee, setSelectedEmployee] = useState<string>("func1")
 
   useEffect(() => {
     loadEmployees()
-    loadMetrics()
   }, [])
 
   const loadEmployees = async () => {
     const employeesList = await authService.getEmployeesList()
     setEmployees(employeesList)
-
-    // Se temos funcionários e nenhum selecionado, selecione o primeiro
-    if (employeesList.length > 0 && !selectedEmployee) {
-      setSelectedEmployee(employeesList[0].id)
-    }
-  }
-
-  const loadMetrics = async () => {
-    // Em um sistema real, isso viria da API
-    // Aqui estamos gerando dados mock para demonstração
-    const mockMetrics: EmployeeMetrics[] = employees.map((emp) => ({
-      id: emp.id,
-      name: emp.name,
-      atendimentos: Math.floor(Math.random() * 100) + 20,
-      servicosRealizados: Math.floor(Math.random() * 80) + 10,
-      orcamentosFeitos: Math.floor(Math.random() * 50) + 5,
-      valorGerado: Math.floor(Math.random() * 50000) + 5000,
-      tempoMedio: Math.floor(Math.random() * 120) + 30,
-      satisfacaoCliente: Math.random() * 2 + 3, // 3-5
-      eficiencia: Math.floor(Math.random() * 30) + 70, // 70-100%
-      historico: [
-        {
-          mes: "Jan",
-          atendimentos: Math.floor(Math.random() * 20) + 5,
-          servicos: Math.floor(Math.random() * 15) + 3,
-          orcamentos: Math.floor(Math.random() * 10) + 2,
-          valor: Math.floor(Math.random() * 8000) + 1000,
-        },
-        {
-          mes: "Fev",
-          atendimentos: Math.floor(Math.random() * 20) + 5,
-          servicos: Math.floor(Math.random() * 15) + 3,
-          orcamentos: Math.floor(Math.random() * 10) + 2,
-          valor: Math.floor(Math.random() * 8000) + 1000,
-        },
-        {
-          mes: "Mar",
-          atendimentos: Math.floor(Math.random() * 20) + 5,
-          servicos: Math.floor(Math.random() * 15) + 3,
-          orcamentos: Math.floor(Math.random() * 10) + 2,
-          valor: Math.floor(Math.random() * 8000) + 1000,
-        },
-        {
-          mes: "Abr",
-          atendimentos: Math.floor(Math.random() * 20) + 5,
-          servicos: Math.floor(Math.random() * 15) + 3,
-          orcamentos: Math.floor(Math.random() * 10) + 2,
-          valor: Math.floor(Math.random() * 8000) + 1000,
-        },
-        {
-          mes: "Mai",
-          atendimentos: Math.floor(Math.random() * 20) + 5,
-          servicos: Math.floor(Math.random() * 15) + 3,
-          orcamentos: Math.floor(Math.random() * 10) + 2,
-          valor: Math.floor(Math.random() * 8000) + 1000,
-        },
-        {
-          mes: "Jun",
-          atendimentos: Math.floor(Math.random() * 20) + 5,
-          servicos: Math.floor(Math.random() * 15) + 3,
-          orcamentos: Math.floor(Math.random() * 10) + 2,
-          valor: Math.floor(Math.random() * 8000) + 1000,
-        },
-      ],
-    }))
-
-    setMetrics(mockMetrics)
   }
 
   // Funcionários filtrados pela busca
@@ -227,7 +197,6 @@ export default function FuncionariosPage() {
     }
 
     await loadEmployees()
-    await loadMetrics()
     setIsEmployeeDialogOpen(false)
   }
 
@@ -245,18 +214,7 @@ export default function FuncionariosPage() {
     )
   }
 
-  // Encontrar métricas do funcionário selecionado
-  const selectedMetrics = metrics.find((m) => m.id === selectedEmployee)
-
-  // Função para renderizar barras de progresso
-  const renderProgressBar = (value: number, max: number, color: string) => {
-    const percentage = (value / max) * 100
-    return (
-      <div className="w-full bg-gray-200 rounded-full h-2">
-        <div className={`${color} h-2 rounded-full`} style={{ width: `${percentage}%` }}></div>
-      </div>
-    )
-  }
+  const selectedMetrics = mockMetrics[selectedEmployee] || mockMetrics.func1
 
   return (
     <div className="space-y-6">
@@ -265,10 +223,6 @@ export default function FuncionariosPage() {
           <h1 className="text-3xl font-bold">Funcionários</h1>
           <p className="text-muted-foreground">Gerencie funcionários e visualize métricas de desempenho</p>
         </div>
-        <Button onClick={handleAddEmployee}>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Funcionário
-        </Button>
       </div>
 
       <Tabs defaultValue="lista" className="space-y-4">
@@ -279,9 +233,18 @@ export default function FuncionariosPage() {
 
         <TabsContent value="lista">
           <Card>
-            <CardHeader>
-              <CardTitle>Funcionários Cadastrados</CardTitle>
-              <CardDescription>Total de {employees.length} funcionário(s) no sistema</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Gerenciar Funcionários</CardTitle>
+                <CardDescription>
+                  Cadastre e gerencie os funcionários da oficina. Total: {employees.length} funcionário(s)
+                  cadastrado(s).
+                </CardDescription>
+              </div>
+              <Button onClick={handleAddEmployee}>
+                <Plus className="mr-2 h-4 w-4" />
+                Novo Funcionário
+              </Button>
             </CardHeader>
             <CardContent>
               <div className="mb-4 flex items-center gap-2">
@@ -348,268 +311,184 @@ export default function FuncionariosPage() {
         </TabsContent>
 
         <TabsContent value="metricas">
-          <div className="grid gap-4 md:grid-cols-4">
-            <Card className="md:col-span-1">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* Sidebar de seleção de funcionário */}
+            <Card className="lg:col-span-1">
               <CardHeader>
-                <CardTitle>Funcionários</CardTitle>
-                <CardDescription>Selecione para ver métricas</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Selecionar Funcionário
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
                   {employees.map((employee) => (
-                    <div
+                    <Button
                       key={employee.id}
-                      className={`p-3 rounded-md cursor-pointer flex items-center justify-between ${
-                        selectedEmployee === employee.id ? "bg-primary/10 border border-primary/30" : "hover:bg-muted"
-                      }`}
+                      variant={selectedEmployee === employee.id ? "default" : "outline"}
+                      className="w-full justify-start"
                       onClick={() => setSelectedEmployee(employee.id)}
                     >
-                      <div className="flex items-center">
-                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mr-3">
-                          <Users className="h-4 w-4 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{employee.name}</p>
-                          <p className="text-xs text-muted-foreground">{employee.email}</p>
-                        </div>
-                      </div>
-                      {employee.isActive ? (
-                        <Badge variant="outline" className="bg-green-100 text-green-800">
-                          Ativo
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-red-100 text-red-800">
-                          Inativo
-                        </Badge>
-                      )}
-                    </div>
+                      <Users className="mr-2 h-4 w-4" />
+                      {employee.name}
+                    </Button>
                   ))}
                 </div>
               </CardContent>
             </Card>
 
-            <div className="md:col-span-3 space-y-4">
-              {selectedMetrics ? (
-                <>
-                  <div className="grid gap-4 md:grid-cols-4">
-                    <Card>
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Atendimentos</CardTitle>
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">{selectedMetrics.atendimentos}</div>
-                        <p className="text-xs text-muted-foreground">Total de clientes atendidos</p>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Serviços</CardTitle>
-                        <Wrench className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">{selectedMetrics.servicosRealizados}</div>
-                        <p className="text-xs text-muted-foreground">Serviços realizados</p>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Orçamentos</CardTitle>
-                        <FileText className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">{selectedMetrics.orcamentosFeitos}</div>
-                        <p className="text-xs text-muted-foreground">Orçamentos elaborados</p>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Valor Gerado</CardTitle>
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">R$ {selectedMetrics.valorGerado.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">Total em serviços</p>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Indicadores de Desempenho</CardTitle>
-                        <CardDescription>Métricas de qualidade e eficiência</CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-6">
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <Label>Satisfação do Cliente</Label>
-                            <div className="flex items-center">
-                              <Star className="h-4 w-4 text-yellow-500 mr-1" />
-                              <span className="font-medium">{selectedMetrics.satisfacaoCliente.toFixed(1)}/5</span>
-                            </div>
-                          </div>
-                          {renderProgressBar(selectedMetrics.satisfacaoCliente, 5, "bg-yellow-500")}
-                        </div>
-
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <Label>Eficiência</Label>
-                            <div className="flex items-center">
-                              <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
-                              <span className="font-medium">{selectedMetrics.eficiencia}%</span>
-                            </div>
-                          </div>
-                          {renderProgressBar(selectedMetrics.eficiencia, 100, "bg-green-500")}
-                        </div>
-
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <Label>Tempo Médio de Serviço</Label>
-                            <div className="flex items-center">
-                              <Clock className="h-4 w-4 text-blue-500 mr-1" />
-                              <span className="font-medium">{selectedMetrics.tempoMedio} min</span>
-                            </div>
-                          </div>
-                          {renderProgressBar(120 - selectedMetrics.tempoMedio, 120, "bg-blue-500")}
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Histórico Mensal</CardTitle>
-                        <CardDescription>Desempenho nos últimos 6 meses</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="h-[220px] flex items-end justify-between gap-2">
-                          {selectedMetrics.historico.map((mes, index) => (
-                            <div key={index} className="flex flex-col items-center gap-1 w-full">
-                              <div className="w-full flex justify-center gap-1 h-[180px] items-end">
-                                <div
-                                  className="w-2 bg-blue-500 rounded-t"
-                                  style={{ height: `${(mes.atendimentos / 20) * 100}%` }}
-                                  title={`${mes.atendimentos} atendimentos`}
-                                ></div>
-                                <div
-                                  className="w-2 bg-green-500 rounded-t"
-                                  style={{ height: `${(mes.servicos / 15) * 100}%` }}
-                                  title={`${mes.servicos} serviços`}
-                                ></div>
-                                <div
-                                  className="w-2 bg-amber-500 rounded-t"
-                                  style={{ height: `${(mes.orcamentos / 10) * 100}%` }}
-                                  title={`${mes.orcamentos} orçamentos`}
-                                ></div>
-                              </div>
-                              <span className="text-xs text-muted-foreground">{mes.mes}</span>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="flex justify-center mt-2 gap-4">
-                          <div className="flex items-center gap-1">
-                            <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                            <span className="text-xs">Atendimentos</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <div className="w-3 h-3 bg-green-500 rounded"></div>
-                            <span className="text-xs">Serviços</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <div className="w-3 h-3 bg-amber-500 rounded"></div>
-                            <span className="text-xs">Orçamentos</span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Últimos Serviços Realizados</CardTitle>
-                      <CardDescription>Serviços mais recentes deste funcionário</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Data</TableHead>
-                            <TableHead>Cliente</TableHead>
-                            <TableHead>Serviço</TableHead>
-                            <TableHead>Valor</TableHead>
-                            <TableHead>Status</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {[
-                            {
-                              data: "15/06/2023",
-                              cliente: "João Silva",
-                              servico: "Troca de óleo",
-                              valor: 150,
-                              status: "Concluído",
-                            },
-                            {
-                              data: "12/06/2023",
-                              cliente: "Maria Oliveira",
-                              servico: "Revisão completa",
-                              valor: 450,
-                              status: "Concluído",
-                            },
-                            {
-                              data: "10/06/2023",
-                              cliente: "Carlos Santos",
-                              servico: "Troca de pastilhas",
-                              valor: 280,
-                              status: "Concluído",
-                            },
-                            {
-                              data: "05/06/2023",
-                              cliente: "Ana Costa",
-                              servico: "Alinhamento",
-                              valor: 120,
-                              status: "Concluído",
-                            },
-                            {
-                              data: "01/06/2023",
-                              cliente: "Pedro Lima",
-                              servico: "Diagnóstico",
-                              valor: 100,
-                              status: "Concluído",
-                            },
-                          ].map((servico, index) => (
-                            <TableRow key={index}>
-                              <TableCell>{servico.data}</TableCell>
-                              <TableCell>{servico.cliente}</TableCell>
-                              <TableCell>{servico.servico}</TableCell>
-                              <TableCell>R$ {servico.valor.toLocaleString()}</TableCell>
-                              <TableCell>
-                                <Badge variant="outline" className="bg-green-100 text-green-800">
-                                  {servico.status}
-                                </Badge>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </CardContent>
-                  </Card>
-                </>
-              ) : (
+            {/* Métricas principais */}
+            <div className="lg:col-span-3 space-y-6">
+              {/* Cards de resumo */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card>
-                  <CardContent className="flex flex-col items-center justify-center py-10">
-                    <BarChart3 className="h-16 w-16 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium">Selecione um funcionário</h3>
-                    <p className="text-sm text-muted-foreground text-center max-w-md mt-2">
-                      Escolha um funcionário na lista à esquerda para visualizar suas métricas de desempenho e histórico
-                      de atividades.
-                    </p>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Atendimentos</CardTitle>
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{selectedMetrics.atendimentos}</div>
+                    <p className="text-xs text-muted-foreground">Total no período</p>
                   </CardContent>
                 </Card>
-              )}
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Serviços</CardTitle>
+                    <Wrench className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{selectedMetrics.servicos}</div>
+                    <p className="text-xs text-muted-foreground">Serviços executados</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Orçamentos</CardTitle>
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{selectedMetrics.orcamentos}</div>
+                    <p className="text-xs text-muted-foreground">Orçamentos criados</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Valor Gerado</CardTitle>
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">R$ {selectedMetrics.valorGerado.toLocaleString("pt-BR")}</div>
+                    <p className="text-xs text-muted-foreground">Receita total</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Indicadores de desempenho */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Satisfação</CardTitle>
+                    <Star className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center space-x-2">
+                      <div className="text-2xl font-bold">{selectedMetrics.satisfacao}</div>
+                      <div className="flex">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={`h-4 w-4 ${
+                              star <= selectedMetrics.satisfacao ? "text-yellow-400 fill-current" : "text-gray-300"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Avaliação média dos clientes</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Eficiência</CardTitle>
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{selectedMetrics.eficiencia}%</div>
+                    <p className="text-xs text-muted-foreground">Taxa de conclusão no prazo</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Tempo Médio</CardTitle>
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{selectedMetrics.tempoMedio}min</div>
+                    <p className="text-xs text-muted-foreground">Por serviço executado</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Histórico mensal */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Histórico Mensal</CardTitle>
+                  <CardDescription>Evolução de atendimentos, serviços e orçamentos</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {selectedMetrics.historico.map((item, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="font-medium">{item.mes}</div>
+                        <div className="flex space-x-4 text-sm">
+                          <span className="text-blue-600">{item.atendimentos} atendimentos</span>
+                          <span className="text-green-600">{item.servicos} serviços</span>
+                          <span className="text-orange-600">{item.orcamentos} orçamentos</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Últimos serviços */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Últimos Serviços</CardTitle>
+                  <CardDescription>Serviços mais recentes realizados pelo funcionário</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Cliente</TableHead>
+                          <TableHead>Veículo</TableHead>
+                          <TableHead>Serviço</TableHead>
+                          <TableHead>Data</TableHead>
+                          <TableHead className="text-right">Valor</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedMetrics.ultimosServicos.map((servico) => (
+                          <TableRow key={servico.id}>
+                            <TableCell className="font-medium">{servico.cliente}</TableCell>
+                            <TableCell>{servico.veiculo}</TableCell>
+                            <TableCell>{servico.servico}</TableCell>
+                            <TableCell>{new Date(servico.data).toLocaleDateString("pt-BR")}</TableCell>
+                            <TableCell className="text-right">R$ {servico.valor.toLocaleString("pt-BR")}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </TabsContent>
