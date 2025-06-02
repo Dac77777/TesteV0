@@ -1,219 +1,176 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { LogOut, Car, Clock, CheckCircle, AlertCircle } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Car, Clock, CheckCircle, AlertCircle, Calendar, FileText } from "lucide-react"
 import { authService } from "@/lib/auth"
+import type { User } from "@/types/user"
 
 export default function ClientePage() {
-  const [user, setUser] = useState(authService.getCurrentUser())
+  const [user, setUser] = useState<User | null>(null)
   const [services, setServices] = useState([])
-  const [vehicles, setVehicles] = useState([])
-  const router = useRouter()
 
   useEffect(() => {
-    if (!user || user.role !== "cliente") {
-      router.push("/login")
-      return
-    }
+    const currentUser = authService.getCurrentUser()
+    setUser(currentUser)
 
-    // Carregar serviços do cliente
-    loadClientData()
-  }, [user, router])
-
-  const loadClientData = () => {
-    // Mock data - em produção viria da API
-    const mockServices = [
+    // Simular dados dos serviços do cliente
+    setServices([
       {
         id: 1,
-        description: "Troca de Óleo",
-        vehicle: "ABC-1234 - Fiat Uno",
-        status: "em_andamento",
-        startDate: "2023-06-01",
-        endDate: null,
+        vehicle: "Honda Civic 2020",
+        service: "Troca de óleo",
+        status: "completed",
+        date: "2024-01-15",
         value: 150.0,
-        notes: "Troca de óleo e filtro",
       },
       {
         id: 2,
-        description: "Revisão Completa",
-        vehicle: "ABC-1234 - Fiat Uno",
-        status: "concluido",
-        startDate: "2023-05-15",
-        endDate: "2023-05-17",
+        vehicle: "Honda Civic 2020",
+        service: "Revisão completa",
+        status: "in-progress",
+        date: "2024-01-20",
         value: 450.0,
-        notes: "Revisão dos 20.000km",
       },
       {
         id: 3,
-        description: "Alinhamento",
-        vehicle: "ABC-1234 - Fiat Uno",
-        status: "agendado",
-        startDate: "2023-06-10",
-        endDate: null,
+        vehicle: "Honda Civic 2020",
+        service: "Alinhamento",
+        status: "pending",
+        date: "2024-01-25",
         value: 80.0,
-        notes: "Agendado para próxima semana",
       },
-    ]
+    ])
+  }, [])
 
-    const mockVehicles = [
-      {
-        id: 1,
-        plate: "ABC-1234",
-        brand: "Fiat",
-        model: "Uno",
-        year: "2018",
-        color: "Branco",
-      },
-    ]
-
-    setServices(mockServices)
-    setVehicles(mockVehicles)
-  }
-
-  const handleLogout = () => {
-    authService.logout()
-    router.push("/login")
+  if (!user) {
+    return <div>Carregando...</div>
   }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "agendado":
+      case "completed":
         return (
-          <Badge variant="outline" className="bg-blue-100 text-blue-800">
-            <Clock className="mr-1 h-3 w-3" />
-            Agendado
-          </Badge>
-        )
-      case "em_andamento":
-        return (
-          <Badge variant="outline" className="bg-amber-100 text-amber-800">
-            <AlertCircle className="mr-1 h-3 w-3" />
-            Em Andamento
-          </Badge>
-        )
-      case "concluido":
-        return (
-          <Badge variant="outline" className="bg-green-100 text-green-800">
-            <CheckCircle className="mr-1 h-3 w-3" />
+          <Badge className="bg-green-100 text-green-800">
+            <CheckCircle className="h-3 w-3 mr-1" />
             Concluído
           </Badge>
         )
+      case "in-progress":
+        return (
+          <Badge className="bg-blue-100 text-blue-800">
+            <Clock className="h-3 w-3 mr-1" />
+            Em Andamento
+          </Badge>
+        )
+      case "pending":
+        return (
+          <Badge variant="outline">
+            <AlertCircle className="h-3 w-3 mr-1" />
+            Pendente
+          </Badge>
+        )
       default:
-        return <Badge variant="outline">{status}</Badge>
+        return null
     }
   }
 
-  const currentServices = services.filter((s) => s.status !== "concluido")
-  const serviceHistory = services.filter((s) => s.status === "concluido")
-
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Olá, {user?.name}!</h1>
-            <p className="text-muted-foreground">Acompanhe seus serviços e histórico</p>
-          </div>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Sair
-          </Button>
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Área do Cliente</h1>
+        <p className="text-muted-foreground">Olá, {user.name}! Acompanhe seus serviços aqui.</p>
+      </div>
 
-        {/* Meus Veículos */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Car className="h-5 w-5" />
-              Meus Veículos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {vehicles.map((vehicle) => (
-                <div key={vehicle.id} className="border rounded-lg p-4">
-                  <div className="font-medium text-lg">{vehicle.plate}</div>
-                  <div className="text-muted-foreground">
-                    {vehicle.brand} {vehicle.model} {vehicle.year}
-                  </div>
-                  <div className="text-sm text-muted-foreground">{vehicle.color}</div>
-                </div>
-              ))}
+      {/* Informações do Cliente */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Suas Informações</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Nome</p>
+              <p className="text-lg">{user.name}</p>
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">CPF</p>
+              <p className="text-lg">{user.cpf}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Serviços Atuais */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Serviços em Andamento</CardTitle>
-            <CardDescription>Acompanhe o status dos seus serviços atuais</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {currentServices.length > 0 ? (
-              <div className="space-y-4">
-                {currentServices.map((service) => (
-                  <div key={service.id} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium">{service.description}</h3>
-                      {getStatusBadge(service.status)}
-                    </div>
-                    <div className="grid gap-2 text-sm text-muted-foreground">
-                      <div>Veículo: {service.vehicle}</div>
-                      <div>Data de Início: {service.startDate}</div>
-                      <div>Valor: R$ {service.value.toFixed(2)}</div>
-                      {service.notes && <div>Observações: {service.notes}</div>}
-                    </div>
-                  </div>
-                ))}
+      {/* Serviços */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Seus Serviços</CardTitle>
+          <CardDescription>Histórico e status dos seus serviços</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {services.map((service: any) => (
+            <div key={service.id} className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <Car className="h-4 w-4 text-muted-foreground" />
+                  <p className="font-medium">{service.vehicle}</p>
+                </div>
+                <p className="text-sm text-muted-foreground mb-1">{service.service}</p>
+                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {new Date(service.date).toLocaleDateString("pt-BR")}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <FileText className="h-3 w-3" />
+                    R$ {service.value.toFixed(2)}
+                  </span>
+                </div>
               </div>
-            ) : (
-              <p className="text-center text-muted-foreground py-8">Nenhum serviço em andamento</p>
-            )}
+              <div className="flex items-center gap-2">
+                {getStatusBadge(service.status)}
+                <Button size="sm" variant="outline">
+                  Detalhes
+                </Button>
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Resumo */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Serviços Concluídos</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{services.filter((s: any) => s.status === "completed").length}</div>
           </CardContent>
         </Card>
 
-        {/* Histórico */}
         <Card>
-          <CardHeader>
-            <CardTitle>Histórico de Serviços</CardTitle>
-            <CardDescription>Todos os serviços já realizados</CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Em Andamento</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {serviceHistory.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Serviço</TableHead>
-                    <TableHead>Veículo</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Valor</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {serviceHistory.map((service) => (
-                    <TableRow key={service.id}>
-                      <TableCell className="font-medium">{service.description}</TableCell>
-                      <TableCell>{service.vehicle}</TableCell>
-                      <TableCell>
-                        {service.startDate} - {service.endDate}
-                      </TableCell>
-                      <TableCell>R$ {service.value.toFixed(2)}</TableCell>
-                      <TableCell>{getStatusBadge(service.status)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <p className="text-center text-muted-foreground py-8">Nenhum serviço no histórico</p>
-            )}
+            <div className="text-2xl font-bold">{services.filter((s: any) => s.status === "in-progress").length}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Gasto</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              R$ {services.reduce((total: number, s: any) => total + s.value, 0).toFixed(2)}
+            </div>
           </CardContent>
         </Card>
       </div>

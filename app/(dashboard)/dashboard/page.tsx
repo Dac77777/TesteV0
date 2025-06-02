@@ -1,125 +1,196 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
-import { Users, Car, Wrench, Package, AlertCircle } from "lucide-react"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Calendar, Car, Users, Wrench, DollarSign, Clock } from "lucide-react"
+import { authService } from "@/lib/auth"
+import type { User } from "@/types/user"
 
 export default function DashboardPage() {
-  const [date, setDate] = useState<Date | undefined>(new Date())
-  const [isOnline, setIsOnline] = useState(true)
-  const [syncStatus, setSyncStatus] = useState("Sincronizado")
+  const [user, setUser] = useState<User | null>(null)
+  const [stats, setStats] = useState({
+    totalClients: 0,
+    totalVehicles: 0,
+    activeServices: 0,
+    pendingServices: 0,
+    completedServices: 0,
+    monthlyRevenue: 0,
+  })
 
-  // Check online status
   useEffect(() => {
-    const handleOnlineStatus = () => {
-      setIsOnline(navigator.onLine)
-      if (navigator.onLine) {
-        setSyncStatus("Sincronizando...")
-        // Simulate sync process
-        setTimeout(() => {
-          setSyncStatus("Sincronizado")
-        }, 1500)
-      } else {
-        setSyncStatus("Offline - Dados salvos localmente")
-      }
-    }
+    const currentUser = authService.getCurrentUser()
+    setUser(currentUser)
 
-    window.addEventListener("online", handleOnlineStatus)
-    window.addEventListener("offline", handleOnlineStatus)
-
-    return () => {
-      window.removeEventListener("online", handleOnlineStatus)
-      window.removeEventListener("offline", handleOnlineStatus)
-    }
+    // Simular dados do dashboard
+    setStats({
+      totalClients: 45,
+      totalVehicles: 67,
+      activeServices: 12,
+      pendingServices: 8,
+      completedServices: 156,
+      monthlyRevenue: 25400,
+    })
   }, [])
 
-  // Mock data
-  const stats = [
-    { title: "Clientes", value: "124", icon: Users, color: "bg-blue-100 text-blue-700" },
-    { title: "Veículos", value: "87", icon: Car, color: "bg-green-100 text-green-700" },
-    { title: "Serviços Ativos", value: "12", icon: Wrench, color: "bg-amber-100 text-amber-700" },
-    { title: "Itens em Estoque", value: "342", icon: Package, color: "bg-purple-100 text-purple-700" },
-  ]
-
-  const todayAppointments = [
-    { time: "09:00", client: "João Silva", service: "Troca de Óleo", vehicle: "Fiat Uno 2018" },
-    { time: "11:30", client: "Maria Oliveira", service: "Revisão Completa", vehicle: "Honda Civic 2020" },
-    { time: "14:00", client: "Carlos Santos", service: "Alinhamento", vehicle: "VW Gol 2019" },
-  ]
+  if (!user) {
+    return <div>Carregando...</div>
+  }
 
   return (
     <div className="space-y-6">
-      {!isOnline && (
-        <Alert variant="warning">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Modo Offline</AlertTitle>
-          <AlertDescription>
-            Você está trabalhando offline. Os dados serão sincronizados quando a conexão for restabelecida.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <div className="text-sm text-muted-foreground">Status: {syncStatus}</div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.title}>
-            <CardContent className="flex items-center p-6">
-              <div className={`mr-4 rounded-full p-2 ${stat.color}`}>
-                <stat.icon className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                <h3 className="text-2xl font-bold">{stat.value}</h3>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      <div>
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <p className="text-muted-foreground">Bem-vindo de volta, {user.name}!</p>
       </div>
 
+      {/* Cards de Estatísticas */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total de Clientes</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalClients}</div>
+            <p className="text-xs text-muted-foreground">+12% em relação ao mês passado</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Veículos Cadastrados</CardTitle>
+            <Car className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalVehicles}</div>
+            <p className="text-xs text-muted-foreground">+8% em relação ao mês passado</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Serviços Ativos</CardTitle>
+            <Wrench className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.activeServices}</div>
+            <p className="text-xs text-muted-foreground">Em andamento</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Receita Mensal</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">R$ {stats.monthlyRevenue.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">+15% em relação ao mês passado</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Serviços Recentes */}
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Agendamentos de Hoje</CardTitle>
-            <CardDescription>Serviços agendados para hoje</CardDescription>
+            <CardTitle>Serviços Pendentes</CardTitle>
+            <CardDescription>Serviços aguardando aprovação</CardDescription>
           </CardHeader>
-          <CardContent>
-            {todayAppointments.length > 0 ? (
-              <div className="space-y-4">
-                {todayAppointments.map((appointment, index) => (
-                  <div key={index} className="flex items-center justify-between border-b pb-2 last:border-0">
-                    <div>
-                      <p className="font-medium">
-                        {appointment.time} - {appointment.client}
-                      </p>
-                      <p className="text-sm text-muted-foreground">{appointment.service}</p>
-                      <p className="text-xs text-muted-foreground">{appointment.vehicle}</p>
-                    </div>
-                    <Button variant="outline" size="sm">
-                      Detalhes
-                    </Button>
-                  </div>
-                ))}
+          <CardContent className="space-y-4">
+            {[
+              { id: 1, client: "João Silva", service: "Troca de óleo", vehicle: "Honda Civic 2020" },
+              { id: 2, client: "Maria Santos", service: "Revisão completa", vehicle: "Toyota Corolla 2019" },
+              { id: 3, client: "Carlos Oliveira", service: "Alinhamento", vehicle: "Ford Focus 2021" },
+            ].map((item) => (
+              <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div>
+                  <p className="font-medium">{item.client}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {item.service} - {item.vehicle}
+                  </p>
+                </div>
+                <Badge variant="outline">
+                  <Clock className="h-3 w-3 mr-1" />
+                  Pendente
+                </Badge>
               </div>
-            ) : (
-              <p className="text-center text-muted-foreground">Nenhum agendamento para hoje</p>
-            )}
+            ))}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Calendário</CardTitle>
-            <CardDescription>Visualize e gerencie agendamentos</CardDescription>
+            <CardTitle>Serviços em Andamento</CardTitle>
+            <CardDescription>Serviços sendo executados</CardDescription>
           </CardHeader>
-          <CardContent>
-            <Calendar mode="single" selected={date} onSelect={setDate} className="rounded-md border" />
+          <CardContent className="space-y-4">
+            {[
+              {
+                id: 1,
+                client: "Ana Costa",
+                service: "Reparo de freios",
+                vehicle: "Volkswagen Golf 2018",
+                progress: 75,
+              },
+              { id: 2, client: "Pedro Lima", service: "Troca de pneus", vehicle: "Chevrolet Onix 2020", progress: 50 },
+              {
+                id: 3,
+                client: "Lucia Ferreira",
+                service: "Diagnóstico eletrônico",
+                vehicle: "Hyundai HB20 2019",
+                progress: 25,
+              },
+            ].map((item) => (
+              <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex-1">
+                  <p className="font-medium">{item.client}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {item.service} - {item.vehicle}
+                  </p>
+                  <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                    <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${item.progress}%` }}></div>
+                  </div>
+                </div>
+                <Badge variant="default">
+                  <Wrench className="h-3 w-3 mr-1" />
+                  {item.progress}%
+                </Badge>
+              </div>
+            ))}
           </CardContent>
         </Card>
       </div>
+
+      {/* Ações Rápidas */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Ações Rápidas</CardTitle>
+          <CardDescription>Acesso rápido às funcionalidades principais</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-4">
+            <Button className="h-20 flex flex-col gap-2" variant="outline">
+              <Users className="h-6 w-6" />
+              <span>Novo Cliente</span>
+            </Button>
+            <Button className="h-20 flex flex-col gap-2" variant="outline">
+              <Car className="h-6 w-6" />
+              <span>Novo Veículo</span>
+            </Button>
+            <Button className="h-20 flex flex-col gap-2" variant="outline">
+              <Wrench className="h-6 w-6" />
+              <span>Novo Serviço</span>
+            </Button>
+            <Button className="h-20 flex flex-col gap-2" variant="outline">
+              <Calendar className="h-6 w-6" />
+              <span>Agendar</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

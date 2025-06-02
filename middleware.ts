@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 // Rotas que não precisam de autenticação
-const publicRoutes = ["/login", "/"]
+const publicRoutes = ["/", "/login"]
 
 // Função para verificar se a rota atual é pública
 function isPublicRoute(path: string) {
@@ -23,20 +23,24 @@ export function middleware(request: NextRequest) {
 
   // Se não houver token, redireciona para o login
   if (!authToken) {
-    return NextResponse.redirect(new URL("/login", request.url))
+    const loginUrl = new URL("/login", request.url)
+    return NextResponse.redirect(loginUrl)
   }
 
   // Verifica permissões baseadas em rotas e papéis
   if (path.startsWith("/dashboard") && userRole !== "admin") {
-    return NextResponse.redirect(new URL("/login", request.url))
+    const loginUrl = new URL("/login", request.url)
+    return NextResponse.redirect(loginUrl)
   }
 
   if (path.startsWith("/funcionario") && userRole !== "funcionario") {
-    return NextResponse.redirect(new URL("/login", request.url))
+    const loginUrl = new URL("/login", request.url)
+    return NextResponse.redirect(loginUrl)
   }
 
   if (path.startsWith("/cliente") && userRole !== "cliente") {
-    return NextResponse.redirect(new URL("/login", request.url))
+    const loginUrl = new URL("/login", request.url)
+    return NextResponse.redirect(loginUrl)
   }
 
   return NextResponse.next()

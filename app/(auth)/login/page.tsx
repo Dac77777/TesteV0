@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,6 +24,11 @@ export default function LoginPage() {
   // Funcionário/Admin
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
+
+  // Limpar qualquer sessão existente ao carregar a página de login
+  useEffect(() => {
+    authService.logout()
+  }, [])
 
   const handleClientLogin = async (e: React.FormEvent) => {
     e.preventDefault()
